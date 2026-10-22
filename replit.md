@@ -1,6 +1,6 @@
-# [Project name]
+# QuoteLah
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Synthetic Malaysian hardware quotation demo. See README.md and HANDOFF.md for scope and progress.
 
 ## Run & Operate
 
@@ -34,7 +34,8 @@ _Describe the high-level user-facing capabilities of this app once they exist._
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+Do not deploy or publish this app. Work in runnable milestones; start with M1.
+All data must be synthetic, and role switching is simulated rather than real authentication.
 
 ## Gotchas
 

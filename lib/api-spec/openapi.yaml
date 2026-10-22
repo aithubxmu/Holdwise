@@ -11,6 +11,28 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /messages:
+    get:
+      operationId: listMessages
+      responses:
+        "200":
+          description: Synthetic inbox messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InboxMessage"
+  /demo-context:
+    get:
+      operationId: getDemoContext
+      responses:
+        "200":
+          description: Demo metadata and role identities
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DemoContext"
   /healthz:
     get:
       operationId: healthCheck
@@ -26,6 +48,38 @@ paths:
                 $ref: "#/components/schemas/HealthStatus"
 components:
   schemas:
+    InboxMessage:
+      type: object
+      required: [id, customerId, customerName, customerType, phone, zone, body, receivedAt, status]
+      properties:
+        id: { type: integer }
+        customerId: { type: integer }
+        customerName: { type: string }
+        customerType: { type: string, enum: [walk_in, regular, contractor] }
+        phone: { type: string }
+        zone: { type: string }
+        body: { type: string }
+        receivedAt: { type: string }
+        status: { type: string, enum: [new, drafted, needs_review, awaiting_approval, sent, rejected] }
+    DemoUser:
+      type: object
+      required: [id, name, role]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        role: { type: string, enum: [owner, staff, viewer] }
+    DemoContext:
+      type: object
+      required: [shopName, users, productCount, customerCount, zoneCount, milestone]
+      properties:
+        shopName: { type: string }
+        users:
+          type: array
+          items: { $ref: "#/components/schemas/DemoUser" }
+        productCount: { type: integer }
+        customerCount: { type: integer }
+        zoneCount: { type: integer }
+        milestone: { type: string }
     HealthStatus:
       type: object
       properties:

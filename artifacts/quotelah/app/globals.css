@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-paper: hsl(var(--paper));
+  --color-card: hsl(var(--card));
+  --color-ink: hsl(var(--ink));
+  --color-ink-soft: hsl(var(--ink-soft));
+  --color-muted: hsl(var(--muted));
+  --color-line: hsl(var(--line));
+  --color-teal: hsl(var(--teal));
+  --color-teal-deep: hsl(var(--teal-deep));
+  --color-teal-wash: hsl(var(--teal-wash));
+  --color-tape: hsl(var(--tape));
+  --color-tape-wash: hsl(var(--tape-wash));
+  --color-brick: hsl(var(--brick));
+  --color-brick-wash: hsl(var(--brick-wash));
+  --font-sans: var(--font-body);
+  --font-display: var(--font-head);
+  --font-mono: var(--font-code);
+}
+
+:root {
+  --paper: 42 33% 95%;
+  --card: 40 40% 98.5%;
+  --ink: 192 38% 13%;
+  --ink-soft: 192 14% 34%;
+  --muted: 40 18% 89%;
+  --line: 38 16% 83%;
+  --teal: 184 62% 28%;
+  --teal-deep: 190 58% 17%;
+  --teal-wash: 178 34% 90%;
+  --tape: 45 96% 54%;
+  --tape-wash: 46 90% 88%;
+  --brick: 11 66% 46%;
+  --brick-wash: 12 70% 93%;
+}
+
+* { border-color: hsl(var(--line)); }
+body {
+  background: hsl(var(--paper));
+  color: hsl(var(--ink));
+  font-family: var(--font-body), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: .35;
+  background-image: radial-gradient(hsl(var(--ink) / .06) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+.tape-stripe {
+  background: repeating-linear-gradient(-45deg, hsl(var(--tape)) 0 10px, hsl(var(--ink)) 10px 20px);
+}
+.bubble { position: relative; }
+.bubble::before {
+  content: ""; position: absolute; left: -7px; top: 0; width: 14px; height: 14px;
+  background: inherit; clip-path: polygon(100% 0, 0 0, 100% 100%);
+}
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise .35s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes shimmer { 0% { opacity: .55 } 50% { opacity: 1 } 100% { opacity: .55 } }
+.skel { background: hsl(var(--muted)); border-radius: 6px; animation: shimmer 1.4s ease-in-out infinite; }
+@keyframes spin { to { transform: rotate(360deg) } }
+.spin { animation: spin .8s linear infinite; }

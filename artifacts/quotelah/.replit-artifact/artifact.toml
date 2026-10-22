@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "QuoteLah"
+description = "Synthetic Malaysian hardware quotation demo. M1 inbox and simulated roles, built with Next.js."
+version = "1.0.0"
+id = "artifacts/quotelah"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20679
+
+[services.development]
+run = "pnpm --filter @workspace/quotelah run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/quotelah", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/quotelah/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20679"
+BASE_PATH = "/"
