@@ -26,7 +26,10 @@ _Populate as you build — short repo map plus pointers to the source-of-truth f
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Keep the Next.js frontend statically exportable and server operations in the
+  shared Express API. This preserves the artifact's static production hosting;
+  introducing server actions or request-time rendering requires changing the
+  serving model and validating it, not just changing the Next.js source.
 
 ## Product
 

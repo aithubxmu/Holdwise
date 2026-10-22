@@ -1,9 +1,11 @@
 # QuoteLah handoff
 
 ## Current milestone and status
-M1 — complete. API and Next.js workflows run; development preview renders seeded
-inbox data. Backend, schema and seed TypeScript checks pass; frontend typecheck
-passed during implementation. No end-to-end browser test suite was run.
+M2 — rules foundation complete; UI remains M1 until M3. API and Next.js workflows
+run. Production frontend build passed; `/` and `/inbox` HTML and their referenced
+assets were checked in the export directory. `/api/health` returns `{"ok":true}`
+and `/inbox` returns 200 through the development proxy. All 13 M2 unit tests and
+the backend TypeScript check pass. No end-to-end browser test suite was run.
 The user now requests a production repair and republish; this supersedes the
 initial no-deployment instruction. Publishing must be initiated by the user.
 
@@ -18,8 +20,8 @@ initial no-deployment instruction. Publishing must be initiated by the user.
 - Full Apache 2.0 license and ignore rules for secrets/dependencies/build output.
 
 ## Broken or unfinished
-M2–M7 functionality is intentionally not implemented yet. No quotation
-generation, extraction, line editing, approvals, outbox, stock reservation,
+M3–M7 functionality is intentionally not implemented yet. No persisted quotation
+generation, line editing, approvals, outbox, stock reservation,
 dashboard, product settings, reset button, or incoming POST webhook.
 Role switching is a client-side demo choice, not authentication.
 The screenshot browser reported a development HMR WebSocket proxy warning;
@@ -47,12 +49,12 @@ revision before live checks can pass. Do not claim that preview verification
 means the published deployment has been repaired.
 
 ## Next steps in order
-1. M2: pure matching/pricing/stock/routing rules and rule extractor with unit tests.
+1. Publish the serving repair; verify live `/`, `/inbox`, assets and `/api/health`.
 2. M3: persistent editable quote drafts, resolvable flags and before/after logs.
 3. M4: owner approvals, simulated outbox and atomic stock reservation.
 4. M5: strict AI JSON extraction, Zod validation, eight-second timeout/fallback.
 5. M6: dashboard, settings, owner-only reset, POST /api/messages.
-6. M7: polish and checks only. Skip deployment unless the user changes their instruction.
+6. M7: polish and checks.
 
 ## Local operation
 See README for commands. Required environment names: DATABASE_URL and PORT.
@@ -75,4 +77,23 @@ The seed uses an advisory transaction lock and never wipes existing work.
 - All initial messages are new, so the app does not imply unimplemented approvals
   or sends have happened.
 - Seeded identities are fictional; the role selector is not real authentication.
-- Development preview only because the user explicitly excluded deployments.
+- Publishing is now requested; the original no-deployment preference is superseded.
+
+## M2 implementation and boundaries
+`artifacts/api-server/src/lib/extract.ts` exports `extractItems(text, catalog?, zones?)`.
+M3 must supply the current catalog and zones; no hardcoded inventory is inside
+the extractor. `rules.ts` contains pure matching, integer-sen pricing, discounts,
+delivery selection, stock checks and approval routing. `rules.test.ts` has 13
+passing tests. Run `pnpm --filter @workspace/api-server run test`.
+
+Unknown/ambiguous matches remain unresolved, missing quantities remain null, and
+invalid quantities cannot send. Repeated lines consume available stock
+cumulatively in the preview calculation. Actual reservation remains M4 and must
+be transactional. Multiple delivery zones raise a review error rather than
+silently selecting one. Partial totals explicitly report `totalsComplete: false`.
+M3 must display unresolved flags and not treat incomplete totals as a final quote.
+Rules are not yet wired to a creation endpoint; that is M3.
+
+Last live checks after the repair was prepared still returned HTTP 500 for `/`
+and `/inbox`: production still serves the old revision. Live verification is
+pending republish, not passed.
