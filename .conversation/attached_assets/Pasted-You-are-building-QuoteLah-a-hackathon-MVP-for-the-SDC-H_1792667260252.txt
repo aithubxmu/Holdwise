@@ -1,0 +1,80 @@
+You are building "QuoteLah", a hackathon MVP for the SDC Hackathon 2026, Domain 2 "Orbyte Smart SME Challenge" (sponsor: Alpha Red Solutions). Build it from scratch in this Repl. Work in small milestones and keep the app runnable after each one.
+
+## Product in one sentence
+QuoteLah turns a messy WhatsApp price enquiry sent to a small Malaysian shop into an accurate, ready-to-send quotation in minutes, while a human with the right role always approves before anything reaches the customer, and every action is written to an activity log.
+
+## The required journey (this is what judges score — it must work end to end)
+1. TRIGGER: a customer message arrives (simulated inbox + POST /api/messages webhook-style endpoint).
+2. CONNECTED DATA: pull the product catalog, prices, stock levels, customer record (type, zone) and delivery zones.
+3. DECISION LOGIC: AI is used ONLY to extract line items from unstructured text. All pricing, discounts, delivery fees, stock checks and approval routing are deterministic rules in code. The AI must never produce prices or products that are not in the catalog.
+4. HUMAN APPROVAL: staff reviews/edits the draft; consequential quotes require Owner approval.
+5. VISIBLE OUTCOME: the quote is "sent" to a simulated WhatsApp outbox, stock is reserved, and every step is recorded in an activity log.
+
+## Hard constraints
+- ALL data is synthetic and created by us. No real people, phone numbers, companies or customer records. Use obviously fake phone numbers like +60 12-000 0001.
+- No real WhatsApp API, no real payments, no e-invoicing / tax filing, no legal or financial advice. Prices are shown as final; tax is out of scope.
+- Login/RBAC is simulated: a "Act as: Owner / Staff / Viewer" switcher in the header. No real auth.
+- Never commit secrets. Any API key lives in Replit Secrets only. Add a .gitignore that excludes .env*, node_modules, build output.
+- Add a LICENSE file with the full Apache License 2.0 text.
+- The app must keep working with NO AI key: implement a rule-based fallback extractor (alias dictionary + regex for quantities/units) and use it automatically when the LLM call fails, times out (8s) or no key is configured. Show a small badge on each draft: "Parsed by: AI" or "Parsed by: rules (fallback)".
+
+## Tech stack
+- Next.js (App Router) + TypeScript + Tailwind CSS. Simple, clean UI; mobile-friendly.
+- Replit's built-in PostgreSQL database with Drizzle ORM (do NOT use a SQLite file — deployments must persist data).
+- LLM: use Replit's built-in AI integration if available; otherwise read the key from an env var. Wrap it in one module `lib/extract.ts` with a single function `extractItems(text) -> ExtractionResult`. Request strict JSON and validate it with zod; on invalid JSON fall back to the rule-based extractor.
+- Deploy with Replit Deployments so we get a public live URL.
+
+## Data model (Drizzle)
+- users: id, name, role ('owner' | 'staff' | 'viewer')
+- customers: id, name, phone, type ('walk_in' | 'regular' | 'contractor'), zone_id
+- delivery_zones: id, name, fee_rm
+- products: id, sku, name, aliases (text[]), unit, price_rm, stock_qty, reserved_qty, category, variant_group (nullable)
+- messages: id, customer_id, body, received_at, status ('new' | 'drafted' | 'needs_review' | 'awaiting_approval' | 'sent' | 'rejected')
+- quotes: id, message_id, customer_id, status, subtotal, discount_pct, discount_rm, delivery_rm, total, parsed_by ('ai' | 'rules'), created_at, sent_at, valid_until
+- quote_items: id, quote_id, raw_text, product_id (nullable), qty, unit_price, line_total, confidence (0–1), flags (text[])
+- activity_log: id, at, actor_user_id (nullable = system), action, entity, entity_id, details (jsonb with before/after)
+
+## Seed data (synthetic) — shop "Ah Seng Hardware, Kajang"
+- ~40 products: cement, sand, bricks, PVC pipes (variant group: Class B / Class D for 1", 2", 3"), PVC glue, paint, brushes, nails, screws, wire mesh, tiles, tile grout, roof sheets, waterproofing, tools. Realistic Malaysian prices in RM (e.g. Portland cement 50kg ≈ RM 19.50). Each product gets aliases in Malay, English and local slang (e.g. cement: "simen", "semen", "cement", "bag simen"; pipe: "paip", "pipe", "batang paip"; inch: "inci", "inch", '"').
+- Make 2–3 products deliberately low on stock.
+- ~10 customers across the 3 types and zones.
+- Delivery zones: Kajang RM 15, Bangi RM 25, Semenyih RM 30, Cheras RM 35, Putrajaya RM 40; self-pickup RM 0.
+- 3 users: Ah Seng (owner), Aina (staff), Mei Ling (viewer).
+- ~15 messages in Malay / English / Manglish, including tricky cases: ambiguous variant ("paip PVC 2 inci"), unknown item, quantity exceeding stock, a big contractor order over RM 1,000, a message with no quantities, a polite greeting with an order hidden inside.
+  Example: "boss, nak 20 bag simen + 5 batang paip PVC 2 inci, hantar Bangi esok, berapa?"
+- A "Reset demo data" button (owner only) that wipes and reseeds everything — needed for recording the demo video.
+
+## Business rules (put them in `lib/rules.ts`, pure functions, with unit tests)
+- Matching: match extracted item text against product name + aliases (normalised, case-insensitive, simple fuzzy match). Confidence < 0.7 → flag `low_confidence`. No match → flag `unknown_item` (no price, human must pick). Multiple products in the same variant_group match → flag `ambiguous_variant` with the options listed.
+- Stock: requested qty > (stock_qty − reserved_qty) → flag `insufficient_stock` and show available qty.
+- Discount by customer type: walk_in 0%, regular 3%, contractor 5%.
+- Delivery fee from the customer's zone, or from a zone mentioned in the message if the extractor finds one.
+- Quote valid for 3 days.
+- Approval routing: if total > RM 500, OR discount > 5%, OR staff manually overrode any unit price → status 'awaiting_approval' and only an Owner can approve. Otherwise Staff can send directly. Viewer can never edit or send.
+- Any quote with an unresolved flag cannot be sent.
+
+## Screens
+1. Inbox — list of messages with status chips; "Simulate incoming message" button (pick a seeded message or type a custom one + choose customer).
+2. Quote draft (main screen) — left: original message; right: line items table with flags shown inline and resolvable (pick variant, change qty, pick product for unknown item, remove line), totals, "parsed by" badge, approval rule explanation ("Needs owner approval because total > RM 500"). Buttons depend on role.
+3. Approvals — owner queue: approve / return with comment.
+4. Outbox — the outgoing message rendered like a WhatsApp chat bubble (clean itemised list, total, validity date).
+5. Activity log — chronological, filterable by quote; shows actor, action and before/after for edits.
+6. Dashboard — quotes sent, average response time (sent_at − received_at), flags caught (by type), estimated time saved = quotes sent × configurable "manual minutes per quote" setting (default 8, clearly labelled as an assumption).
+7. Settings (owner) — edit product prices/stock, the manual-minutes assumption, approval threshold.
+
+## Milestones (do them in order; after EACH one: make sure it runs, commit with a clear message, and update HANDOFF.md)
+M1. Project setup, DB schema, seed script, LICENSE, .gitignore, README skeleton, role switcher, Inbox listing seeded messages.
+M2. Rule-based extractor + matching + pricing rules + unit tests for lib/rules.ts.
+M3. Quote draft screen with flags and editing; activity log writes for every action.
+M4. Approval routing + Approvals screen + Outbox + stock reservation.
+M5. LLM extractor with zod validation, timeout and automatic fallback.
+M6. Dashboard, Settings, Reset demo data, POST /api/messages endpoint.
+M7. Polish UI, empty/error states, deploy, put the live URL in README.
+
+## HANDOFF.md (keep it current — another developer will continue your work)
+Sections: current milestone and status; what works; what is broken or unfinished; next steps in order; how to run locally (commands, required env vars by NAME only, never values); data model notes; any decisions you made and why.
+
+## README.md
+What QuoteLah is, the 5-step journey, where AI is used and where rules are used, how to run, how to reset demo data, live URL, tech & AI tools used, license.
+
+Start with M1 now.
