@@ -2,6 +2,7 @@
 
 # compiled output
 build
+out
 .env*
 dist
 tmp

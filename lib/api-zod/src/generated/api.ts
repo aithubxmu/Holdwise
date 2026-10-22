@@ -8,6 +8,11 @@
 import * as zod from 'zod';
 
 
+export const GetHealthResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
 export const ListMessagesResponseItem = zod.object({
   "id": zod.number().int(),
   "customerId": zod.number().int(),

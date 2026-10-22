@@ -34,7 +34,7 @@ _Describe the high-level user-facing capabilities of this app once they exist._
 
 ## User preferences
 
-Do not deploy or publish this app. Work in runnable milestones; start with M1.
+The user now requests publishing to repair production (supersedes the initial no-deploy instruction). Publishing is user-initiated. Work in runnable milestones.
 All data must be synthetic, and role switching is simulated rather than real authentication.
 
 ## Gotchas

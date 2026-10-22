@@ -17,7 +17,7 @@ run = "pnpm --filter @workspace/quotelah run dev"
 [services.production]
 build = [ "pnpm", "--filter", "@workspace/quotelah", "run", "build" ]
 serve = "static"
-publicDir = "artifacts/quotelah/dist/public"
+publicDir = "artifacts/quotelah/out"
 
 [[services.production.rewrites]]
 from = "/*"

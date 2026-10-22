@@ -11,6 +11,19 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /health:
+    get:
+      operationId: getHealth
+      responses:
+        "200":
+          description: API liveness
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok: { type: boolean }
   /messages:
     get:
       operationId: listMessages

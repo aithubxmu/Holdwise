@@ -66,3 +66,7 @@ export interface HealthStatus {
   status: string;
 }
 
+export type GetHealth200 = {
+  ok: boolean;
+};
+

@@ -9,6 +9,7 @@
 export * from './demoContext';
 export * from './demoUser';
 export * from './demoUserRole';
+export * from './getHealth200';
 export * from './healthStatus';
 export * from './inboxMessage';
 export * from './inboxMessageCustomerType';

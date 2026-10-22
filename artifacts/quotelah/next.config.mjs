@@ -1,2 +1,2 @@
 /** @type {import('next').NextConfig} */
-export default { reactStrictMode: true, allowedDevOrigins: ["*.replit.dev", "*.repl.co", "*.picard.replit.dev"], transpilePackages: ["@workspace/api-client-react"] };
+export default { output: "export", reactStrictMode: true, allowedDevOrigins: ["*.replit.dev", "*.repl.co", "*.picard.replit.dev"], transpilePackages: ["@workspace/api-client-react"] };
