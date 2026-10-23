@@ -14,6 +14,7 @@ export const GetHealthResponse = zod.object({
 
 
 export const ListMessagesResponseItem = zod.object({
+  "quoteId": zod.number().int().nullable(),
   "id": zod.number().int(),
   "customerId": zod.number().int(),
   "customerName": zod.string(),
@@ -38,6 +39,422 @@ export const GetDemoContextResponse = zod.object({
   "customerCount": zod.number().int(),
   "zoneCount": zod.number().int(),
   "milestone": zod.string()
+})
+
+
+export const ListProductsResponseItem = zod.object({
+  "id": zod.number().int(),
+  "sku": zod.string(),
+  "name": zod.string(),
+  "unit": zod.string(),
+  "priceRm": zod.string(),
+  "available": zod.number().int(),
+  "category": zod.string(),
+  "variantGroup": zod.string().nullable()
+})
+export const ListProductsResponse = zod.array(ListProductsResponseItem)
+
+
+export const DraftQuoteParams = zod.object({
+  "messageId": zod.coerce.number().int()
+})
+
+export const DraftQuoteBody = zod.object({
+  "actorUserId": zod.number().int()
+})
+
+export const DraftQuoteResponse = zod.object({
+  "id": zod.number().int(),
+  "messageId": zod.number().int(),
+  "messageBody": zod.string(),
+  "receivedAt": zod.string(),
+  "customerName": zod.string(),
+  "customerType": zod.enum(['walk_in', 'regular', 'contractor']),
+  "customerPhone": zod.string(),
+  "deliveryZone": zod.string(),
+  "status": zod.enum(['new', 'drafted', 'needs_review', 'awaiting_approval', 'sent', 'rejected']),
+  "parsedBy": zod.enum(['ai', 'rules']),
+  "lines": zod.array(zod.object({
+  "id": zod.number().int(),
+  "rawText": zod.string(),
+  "productId": zod.number().int().nullable(),
+  "productName": zod.string().nullable(),
+  "unit": zod.string().nullable(),
+  "qty": zod.number().int(),
+  "unitPriceRm": zod.string().nullable(),
+  "catalogPriceRm": zod.string().nullable(),
+  "lineTotalRm": zod.string().nullable(),
+  "confidence": zod.number(),
+  "flags": zod.array(zod.enum(['unknown_item', 'ambiguous_variant', 'low_confidence', 'missing_quantity', 'invalid_quantity', 'insufficient_stock'])),
+  "available": zod.number().int().nullable(),
+  "options": zod.array(zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "priceRm": zod.string(),
+  "available": zod.number().int()
+}))
+})),
+  "subtotalRm": zod.string(),
+  "discountPct": zod.number(),
+  "discountRm": zod.string(),
+  "deliveryRm": zod.string(),
+  "totalRm": zod.string(),
+  "totalsComplete": zod.boolean(),
+  "approvalReasons": zod.array(zod.string()),
+  "openFlags": zod.number().int(),
+  "canSend": zod.object({
+  "owner": zod.boolean(),
+  "staff": zod.boolean(),
+  "viewer": zod.boolean()
+}),
+  "needsOwner": zod.boolean(),
+  "createdAt": zod.string(),
+  "sentAt": zod.string().nullable(),
+  "validUntil": zod.string(),
+  "lastComment": zod.string().nullable()
+})
+
+
+export const ListQuotesQueryParams = zod.object({
+  "status": zod.enum(['drafted', 'needs_review', 'awaiting_approval', 'sent', 'rejected']).optional()
+})
+
+export const ListQuotesResponseItem = zod.object({
+  "id": zod.number().int(),
+  "messageId": zod.number().int(),
+  "messageBody": zod.string(),
+  "receivedAt": zod.string(),
+  "customerName": zod.string(),
+  "customerType": zod.enum(['walk_in', 'regular', 'contractor']),
+  "customerPhone": zod.string(),
+  "deliveryZone": zod.string(),
+  "status": zod.enum(['new', 'drafted', 'needs_review', 'awaiting_approval', 'sent', 'rejected']),
+  "parsedBy": zod.enum(['ai', 'rules']),
+  "lines": zod.array(zod.object({
+  "id": zod.number().int(),
+  "rawText": zod.string(),
+  "productId": zod.number().int().nullable(),
+  "productName": zod.string().nullable(),
+  "unit": zod.string().nullable(),
+  "qty": zod.number().int(),
+  "unitPriceRm": zod.string().nullable(),
+  "catalogPriceRm": zod.string().nullable(),
+  "lineTotalRm": zod.string().nullable(),
+  "confidence": zod.number(),
+  "flags": zod.array(zod.enum(['unknown_item', 'ambiguous_variant', 'low_confidence', 'missing_quantity', 'invalid_quantity', 'insufficient_stock'])),
+  "available": zod.number().int().nullable(),
+  "options": zod.array(zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "priceRm": zod.string(),
+  "available": zod.number().int()
+}))
+})),
+  "subtotalRm": zod.string(),
+  "discountPct": zod.number(),
+  "discountRm": zod.string(),
+  "deliveryRm": zod.string(),
+  "totalRm": zod.string(),
+  "totalsComplete": zod.boolean(),
+  "approvalReasons": zod.array(zod.string()),
+  "openFlags": zod.number().int(),
+  "canSend": zod.object({
+  "owner": zod.boolean(),
+  "staff": zod.boolean(),
+  "viewer": zod.boolean()
+}),
+  "needsOwner": zod.boolean(),
+  "createdAt": zod.string(),
+  "sentAt": zod.string().nullable(),
+  "validUntil": zod.string(),
+  "lastComment": zod.string().nullable()
+})
+export const ListQuotesResponse = zod.array(ListQuotesResponseItem)
+
+
+export const GetQuoteParams = zod.object({
+  "quoteId": zod.coerce.number().int()
+})
+
+export const GetQuoteResponse = zod.object({
+  "id": zod.number().int(),
+  "messageId": zod.number().int(),
+  "messageBody": zod.string(),
+  "receivedAt": zod.string(),
+  "customerName": zod.string(),
+  "customerType": zod.enum(['walk_in', 'regular', 'contractor']),
+  "customerPhone": zod.string(),
+  "deliveryZone": zod.string(),
+  "status": zod.enum(['new', 'drafted', 'needs_review', 'awaiting_approval', 'sent', 'rejected']),
+  "parsedBy": zod.enum(['ai', 'rules']),
+  "lines": zod.array(zod.object({
+  "id": zod.number().int(),
+  "rawText": zod.string(),
+  "productId": zod.number().int().nullable(),
+  "productName": zod.string().nullable(),
+  "unit": zod.string().nullable(),
+  "qty": zod.number().int(),
+  "unitPriceRm": zod.string().nullable(),
+  "catalogPriceRm": zod.string().nullable(),
+  "lineTotalRm": zod.string().nullable(),
+  "confidence": zod.number(),
+  "flags": zod.array(zod.enum(['unknown_item', 'ambiguous_variant', 'low_confidence', 'missing_quantity', 'invalid_quantity', 'insufficient_stock'])),
+  "available": zod.number().int().nullable(),
+  "options": zod.array(zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "priceRm": zod.string(),
+  "available": zod.number().int()
+}))
+})),
+  "subtotalRm": zod.string(),
+  "discountPct": zod.number(),
+  "discountRm": zod.string(),
+  "deliveryRm": zod.string(),
+  "totalRm": zod.string(),
+  "totalsComplete": zod.boolean(),
+  "approvalReasons": zod.array(zod.string()),
+  "openFlags": zod.number().int(),
+  "canSend": zod.object({
+  "owner": zod.boolean(),
+  "staff": zod.boolean(),
+  "viewer": zod.boolean()
+}),
+  "needsOwner": zod.boolean(),
+  "createdAt": zod.string(),
+  "sentAt": zod.string().nullable(),
+  "validUntil": zod.string(),
+  "lastComment": zod.string().nullable()
+})
+
+
+export const UpdateQuoteParams = zod.object({
+  "quoteId": zod.coerce.number().int()
+})
+
+export const updateQuoteBodyDiscountPctMin = 0;
+export const updateQuoteBodyDiscountPctMax = 100;
+
+
+
+export const UpdateQuoteBody = zod.object({
+  "actorUserId": zod.number().int(),
+  "discountPct": zod.number().min(updateQuoteBodyDiscountPctMin).max(updateQuoteBodyDiscountPctMax)
+})
+
+export const UpdateQuoteResponse = zod.object({
+  "id": zod.number().int(),
+  "messageId": zod.number().int(),
+  "messageBody": zod.string(),
+  "receivedAt": zod.string(),
+  "customerName": zod.string(),
+  "customerType": zod.enum(['walk_in', 'regular', 'contractor']),
+  "customerPhone": zod.string(),
+  "deliveryZone": zod.string(),
+  "status": zod.enum(['new', 'drafted', 'needs_review', 'awaiting_approval', 'sent', 'rejected']),
+  "parsedBy": zod.enum(['ai', 'rules']),
+  "lines": zod.array(zod.object({
+  "id": zod.number().int(),
+  "rawText": zod.string(),
+  "productId": zod.number().int().nullable(),
+  "productName": zod.string().nullable(),
+  "unit": zod.string().nullable(),
+  "qty": zod.number().int(),
+  "unitPriceRm": zod.string().nullable(),
+  "catalogPriceRm": zod.string().nullable(),
+  "lineTotalRm": zod.string().nullable(),
+  "confidence": zod.number(),
+  "flags": zod.array(zod.enum(['unknown_item', 'ambiguous_variant', 'low_confidence', 'missing_quantity', 'invalid_quantity', 'insufficient_stock'])),
+  "available": zod.number().int().nullable(),
+  "options": zod.array(zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "priceRm": zod.string(),
+  "available": zod.number().int()
+}))
+})),
+  "subtotalRm": zod.string(),
+  "discountPct": zod.number(),
+  "discountRm": zod.string(),
+  "deliveryRm": zod.string(),
+  "totalRm": zod.string(),
+  "totalsComplete": zod.boolean(),
+  "approvalReasons": zod.array(zod.string()),
+  "openFlags": zod.number().int(),
+  "canSend": zod.object({
+  "owner": zod.boolean(),
+  "staff": zod.boolean(),
+  "viewer": zod.boolean()
+}),
+  "needsOwner": zod.boolean(),
+  "createdAt": zod.string(),
+  "sentAt": zod.string().nullable(),
+  "validUntil": zod.string(),
+  "lastComment": zod.string().nullable()
+})
+
+
+export const UpdateQuoteItemParams = zod.object({
+  "quoteId": zod.coerce.number().int(),
+  "itemId": zod.coerce.number().int()
+})
+
+export const updateQuoteItemBodyQtyMin = 0;
+
+export const updateQuoteItemBodyUnitPriceRmRegExp = new RegExp('^\\d+(\\.\\d{1,2})?$');
+
+
+export const UpdateQuoteItemBody = zod.object({
+  "actorUserId": zod.number().int(),
+  "productId": zod.number().int().optional(),
+  "qty": zod.number().int().min(updateQuoteItemBodyQtyMin).optional(),
+  "unitPriceRm": zod.string().regex(updateQuoteItemBodyUnitPriceRmRegExp).optional(),
+  "confirm": zod.boolean().optional().describe('Staff confirms a low-confidence match'),
+  "remove": zod.boolean().optional()
+})
+
+export const UpdateQuoteItemResponse = zod.object({
+  "id": zod.number().int(),
+  "messageId": zod.number().int(),
+  "messageBody": zod.string(),
+  "receivedAt": zod.string(),
+  "customerName": zod.string(),
+  "customerType": zod.enum(['walk_in', 'regular', 'contractor']),
+  "customerPhone": zod.string(),
+  "deliveryZone": zod.string(),
+  "status": zod.enum(['new', 'drafted', 'needs_review', 'awaiting_approval', 'sent', 'rejected']),
+  "parsedBy": zod.enum(['ai', 'rules']),
+  "lines": zod.array(zod.object({
+  "id": zod.number().int(),
+  "rawText": zod.string(),
+  "productId": zod.number().int().nullable(),
+  "productName": zod.string().nullable(),
+  "unit": zod.string().nullable(),
+  "qty": zod.number().int(),
+  "unitPriceRm": zod.string().nullable(),
+  "catalogPriceRm": zod.string().nullable(),
+  "lineTotalRm": zod.string().nullable(),
+  "confidence": zod.number(),
+  "flags": zod.array(zod.enum(['unknown_item', 'ambiguous_variant', 'low_confidence', 'missing_quantity', 'invalid_quantity', 'insufficient_stock'])),
+  "available": zod.number().int().nullable(),
+  "options": zod.array(zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "priceRm": zod.string(),
+  "available": zod.number().int()
+}))
+})),
+  "subtotalRm": zod.string(),
+  "discountPct": zod.number(),
+  "discountRm": zod.string(),
+  "deliveryRm": zod.string(),
+  "totalRm": zod.string(),
+  "totalsComplete": zod.boolean(),
+  "approvalReasons": zod.array(zod.string()),
+  "openFlags": zod.number().int(),
+  "canSend": zod.object({
+  "owner": zod.boolean(),
+  "staff": zod.boolean(),
+  "viewer": zod.boolean()
+}),
+  "needsOwner": zod.boolean(),
+  "createdAt": zod.string(),
+  "sentAt": zod.string().nullable(),
+  "validUntil": zod.string(),
+  "lastComment": zod.string().nullable()
+})
+
+
+export const QuoteActionParams = zod.object({
+  "quoteId": zod.coerce.number().int()
+})
+
+export const quoteActionBodyCommentMax = 500;
+
+
+
+export const QuoteActionBody = zod.object({
+  "actorUserId": zod.number().int(),
+  "action": zod.enum(['send', 'request_approval', 'approve', 'return']),
+  "comment": zod.string().max(quoteActionBodyCommentMax).optional()
+})
+
+export const QuoteActionResponse = zod.object({
+  "id": zod.number().int(),
+  "messageId": zod.number().int(),
+  "messageBody": zod.string(),
+  "receivedAt": zod.string(),
+  "customerName": zod.string(),
+  "customerType": zod.enum(['walk_in', 'regular', 'contractor']),
+  "customerPhone": zod.string(),
+  "deliveryZone": zod.string(),
+  "status": zod.enum(['new', 'drafted', 'needs_review', 'awaiting_approval', 'sent', 'rejected']),
+  "parsedBy": zod.enum(['ai', 'rules']),
+  "lines": zod.array(zod.object({
+  "id": zod.number().int(),
+  "rawText": zod.string(),
+  "productId": zod.number().int().nullable(),
+  "productName": zod.string().nullable(),
+  "unit": zod.string().nullable(),
+  "qty": zod.number().int(),
+  "unitPriceRm": zod.string().nullable(),
+  "catalogPriceRm": zod.string().nullable(),
+  "lineTotalRm": zod.string().nullable(),
+  "confidence": zod.number(),
+  "flags": zod.array(zod.enum(['unknown_item', 'ambiguous_variant', 'low_confidence', 'missing_quantity', 'invalid_quantity', 'insufficient_stock'])),
+  "available": zod.number().int().nullable(),
+  "options": zod.array(zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "priceRm": zod.string(),
+  "available": zod.number().int()
+}))
+})),
+  "subtotalRm": zod.string(),
+  "discountPct": zod.number(),
+  "discountRm": zod.string(),
+  "deliveryRm": zod.string(),
+  "totalRm": zod.string(),
+  "totalsComplete": zod.boolean(),
+  "approvalReasons": zod.array(zod.string()),
+  "openFlags": zod.number().int(),
+  "canSend": zod.object({
+  "owner": zod.boolean(),
+  "staff": zod.boolean(),
+  "viewer": zod.boolean()
+}),
+  "needsOwner": zod.boolean(),
+  "createdAt": zod.string(),
+  "sentAt": zod.string().nullable(),
+  "validUntil": zod.string(),
+  "lastComment": zod.string().nullable()
+})
+
+
+export const ListActivityQueryParams = zod.object({
+  "quoteId": zod.coerce.number().int().optional()
+})
+
+export const ListActivityResponseItem = zod.object({
+  "id": zod.number().int(),
+  "at": zod.string(),
+  "actorName": zod.string().nullable(),
+  "actorRole": zod.string().nullable(),
+  "action": zod.string(),
+  "entity": zod.string(),
+  "entityId": zod.number().int().nullable(),
+  "summary": zod.string(),
+  "details": zod.record(zod.string(), zod.unknown())
+})
+export const ListActivityResponse = zod.array(ListActivityResponseItem)
+
+
+export const ResetDemoBody = zod.object({
+  "actorUserId": zod.number().int()
+})
+
+export const ResetDemoResponse = zod.object({
+  "ok": zod.boolean()
 })
 
 

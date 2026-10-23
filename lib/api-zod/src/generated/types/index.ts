@@ -6,6 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './activityEntry';
+export * from './activityEntryDetails';
+export * from './actorRequest';
+export * from './apiError';
+export * from './catalogItem';
 export * from './demoContext';
 export * from './demoUser';
 export * from './demoUserRole';
@@ -14,3 +19,19 @@ export * from './healthStatus';
 export * from './inboxMessage';
 export * from './inboxMessageCustomerType';
 export * from './inboxMessageStatus';
+export * from './listActivityParams';
+export * from './listQuotesParams';
+export * from './listQuotesStatus';
+export * from './quoteActionRequest';
+export * from './quoteActionRequestAction';
+export * from './quoteDetail';
+export * from './quoteDetailCanSend';
+export * from './quoteDetailCustomerType';
+export * from './quoteDetailParsedBy';
+export * from './quoteDetailStatus';
+export * from './quoteItemUpdate';
+export * from './quoteLine';
+export * from './quoteLineFlagsItem';
+export * from './quoteOption';
+export * from './quoteUpdate';
+export * from './resetDemo200';

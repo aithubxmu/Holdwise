@@ -46,6 +46,139 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DemoContext"
+  /products:
+    get:
+      operationId: listProducts
+      responses:
+        "200":
+          description: Shop catalogue with available stock
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CatalogItem" }
+  /messages/{messageId}/quote:
+    post:
+      operationId: draftQuote
+      parameters:
+        - { name: messageId, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ActorRequest" }
+      responses:
+        "200":
+          description: Draft quotation (existing draft is returned if one exists)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuoteDetail" }
+  /quotes:
+    get:
+      operationId: listQuotes
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { type: string, enum: [drafted, needs_review, awaiting_approval, sent, rejected] }
+      responses:
+        "200":
+          description: Quotations, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/QuoteDetail" }
+  /quotes/{quoteId}:
+    get:
+      operationId: getQuote
+      parameters:
+        - { name: quoteId, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: Quotation with priced lines and approval routing
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuoteDetail" }
+    patch:
+      operationId: updateQuote
+      parameters:
+        - { name: quoteId, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/QuoteUpdate" }
+      responses:
+        "200":
+          description: Updated quotation
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuoteDetail" }
+  /quotes/{quoteId}/items/{itemId}:
+    patch:
+      operationId: updateQuoteItem
+      parameters:
+        - { name: quoteId, in: path, required: true, schema: { type: integer } }
+        - { name: itemId, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/QuoteItemUpdate" }
+      responses:
+        "200":
+          description: Updated quotation
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuoteDetail" }
+  /quotes/{quoteId}/actions:
+    post:
+      operationId: quoteAction
+      parameters:
+        - { name: quoteId, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/QuoteActionRequest" }
+      responses:
+        "200":
+          description: Quotation after the action
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuoteDetail" }
+  /activity:
+    get:
+      operationId: listActivity
+      parameters:
+        - { name: quoteId, in: query, required: false, schema: { type: integer } }
+      responses:
+        "200":
+          description: Activity log, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ActivityEntry" }
+  /demo/reset:
+    post:
+      operationId: resetDemo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ActorRequest" }
+      responses:
+        "200":
+          description: Demo data wiped and reseeded
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok: { type: boolean }
   /healthz:
     get:
       operationId: healthCheck
@@ -63,8 +196,9 @@ components:
   schemas:
     InboxMessage:
       type: object
-      required: [id, customerId, customerName, customerType, phone, zone, body, receivedAt, status]
+      required: [id, customerId, customerName, customerType, phone, zone, body, receivedAt, status, quoteId]
       properties:
+        quoteId: { type: [integer, "null"] }
         id: { type: integer }
         customerId: { type: integer }
         customerName: { type: string }
@@ -93,6 +227,134 @@ components:
         customerCount: { type: integer }
         zoneCount: { type: integer }
         milestone: { type: string }
+    ApiError:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+    ActorRequest:
+      type: object
+      required: [actorUserId]
+      properties:
+        actorUserId: { type: integer }
+    QuoteUpdate:
+      type: object
+      required: [actorUserId, discountPct]
+      properties:
+        actorUserId: { type: integer }
+        discountPct: { type: number, minimum: 0, maximum: 100 }
+    QuoteItemUpdate:
+      type: object
+      required: [actorUserId]
+      properties:
+        actorUserId: { type: integer }
+        productId: { type: integer }
+        qty: { type: integer, minimum: 0 }
+        unitPriceRm: { type: string, pattern: "^\\d+(\\.\\d{1,2})?$" }
+        confirm: { type: boolean, description: "Staff confirms a low-confidence match" }
+        remove: { type: boolean }
+    QuoteActionRequest:
+      type: object
+      required: [actorUserId, action]
+      properties:
+        actorUserId: { type: integer }
+        action: { type: string, enum: [send, request_approval, approve, return] }
+        comment: { type: string, maxLength: 500 }
+    CatalogItem:
+      type: object
+      required: [id, sku, name, unit, priceRm, available, category, variantGroup]
+      properties:
+        id: { type: integer }
+        sku: { type: string }
+        name: { type: string }
+        unit: { type: string }
+        priceRm: { type: string }
+        available: { type: integer }
+        category: { type: string }
+        variantGroup: { type: [string, "null"] }
+    QuoteOption:
+      type: object
+      required: [id, name, priceRm, available]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        priceRm: { type: string }
+        available: { type: integer }
+    QuoteLine:
+      type: object
+      required: [id, rawText, productId, productName, unit, qty, unitPriceRm, catalogPriceRm, lineTotalRm, confidence, flags, available, options]
+      properties:
+        id: { type: integer }
+        rawText: { type: string }
+        productId: { type: [integer, "null"] }
+        productName: { type: [string, "null"] }
+        unit: { type: [string, "null"] }
+        qty: { type: integer }
+        unitPriceRm: { type: [string, "null"] }
+        catalogPriceRm: { type: [string, "null"] }
+        lineTotalRm: { type: [string, "null"] }
+        confidence: { type: number }
+        flags:
+          type: array
+          items: { type: string, enum: [unknown_item, ambiguous_variant, low_confidence, missing_quantity, invalid_quantity, insufficient_stock] }
+        available: { type: [integer, "null"] }
+        options:
+          type: array
+          items: { $ref: "#/components/schemas/QuoteOption" }
+    QuoteDetail:
+      type: object
+      required: [id, messageId, messageBody, receivedAt, customerName, customerType, customerPhone, deliveryZone, status, parsedBy,
+        lines, subtotalRm, discountPct, discountRm, deliveryRm, totalRm, totalsComplete, approvalReasons, openFlags,
+        canSend, needsOwner, createdAt, sentAt, validUntil, lastComment]
+      properties:
+        id: { type: integer }
+        messageId: { type: integer }
+        messageBody: { type: string }
+        receivedAt: { type: string }
+        customerName: { type: string }
+        customerType: { type: string, enum: [walk_in, regular, contractor] }
+        customerPhone: { type: string }
+        deliveryZone: { type: string }
+        status: { type: string, enum: [new, drafted, needs_review, awaiting_approval, sent, rejected] }
+        parsedBy: { type: string, enum: [ai, rules] }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/QuoteLine" }
+        subtotalRm: { type: string }
+        discountPct: { type: number }
+        discountRm: { type: string }
+        deliveryRm: { type: string }
+        totalRm: { type: string }
+        totalsComplete: { type: boolean }
+        approvalReasons:
+          type: array
+          items: { type: string }
+        openFlags: { type: integer }
+        canSend:
+          type: object
+          required: [owner, staff, viewer]
+          properties:
+            owner: { type: boolean }
+            staff: { type: boolean }
+            viewer: { type: boolean }
+        needsOwner: { type: boolean }
+        createdAt: { type: string }
+        sentAt: { type: [string, "null"] }
+        validUntil: { type: string }
+        lastComment: { type: [string, "null"] }
+    ActivityEntry:
+      type: object
+      required: [id, at, actorName, actorRole, action, entity, entityId, summary, details]
+      properties:
+        id: { type: integer }
+        at: { type: string }
+        actorName: { type: [string, "null"] }
+        actorRole: { type: [string, "null"] }
+        action: { type: string }
+        entity: { type: string }
+        entityId: { type: [integer, "null"] }
+        summary: { type: string }
+        details: { type: object, additionalProperties: true }
     HealthStatus:
       type: object
       properties:
