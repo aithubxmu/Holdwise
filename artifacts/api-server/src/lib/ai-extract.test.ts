@@ -9,7 +9,7 @@ const catalog: CatalogProduct[] = [
   { id: 2, name: "Paint primer 5L", aliases: ["primer", "cat alas"], unit: "tin", priceRm: "45.00", stockQty: 10, reservedQty: 0, variantGroup: null },
 ];
 const zones = [{ id: 1, name: "Kajang", feeRm: "15.00" }, { id: 2, name: "Self-pickup", feeRm: "0.00" }];
-const config: LlmConfig = { provider: "gemini", apiKey: "test-key", model: "test-model" };
+const config: LlmConfig = { provider: "gemini", apiKey: "test-key", model: "test-model", fallbackModel: "test-lite" };
 const reply = (body: object) => async () => JSON.stringify(body);
 const good = { items: [{ raw_text: "sepuluh beg simen", product_guess: "Portland cement 50kg", qty: 10, unit: "beg", confidence: 0.95 }],
   delivery_area: "Kajang", requested_date: null, language: "ms", notes: null };
@@ -75,4 +75,26 @@ test("the prompt sends product names and aliases, never prices", () => {
   const { system } = buildPrompt("hi", catalog, zones);
   assert.match(system, /Portland cement 50kg \(customers say: simen, cement\)/);
   assert.doesNotMatch(system, /19\.50|45\.00|RM/);
+});
+test("a busy model (503/429) is retried once on the lighter model", async () => {
+  const seen: string[] = [];
+  const x = await extractMessage("nak 2 bag simen", catalog, zones, { aiEnabled: true, config, call: async (c) => {
+    seen.push(c.model);
+    if (c.model === "test-model") throw new Error("503 high demand");
+    return JSON.stringify(good);
+  } });
+  assert.deepEqual(seen, ["test-model", "test-lite"]);
+  assert.equal(x.parsedBy, "ai");
+  assert.equal(x.model, "test-lite");
+  const other = await extractMessage("nak 2 bag simen", catalog, zones, { aiEnabled: true, config, call: async () => { throw new Error("400 bad request"); } });
+  assert.equal(other.parsedBy, "rules", "non-busy errors are not retried");
+});
+test("AI cannot choose a pipe class the customer did not name", () => {
+  const pipes: CatalogProduct[] = ["B", "D"].map((cls, i) => ({ id: 10 + i, name: `PVC pipe 3 inch Class ${cls}`, aliases: [`paip pvc 3 inci class ${cls.toLowerCase()}`],
+    unit: "length", priceRm: "24.00", stockQty: 60, reservedQty: 0, variantGroup: "pvc-3-inch" }));
+  const [guessed] = toDraftLines([{ rawText: "paip PVC 3 inci 8 batang", itemText: "PVC pipe 3 inch Class B", qty: 8, unit: "batang", aiConfidence: 0.9 }], pipes);
+  assert.equal(guessed?.product, null);
+  assert.deepEqual(guessed?.reviewFlags, ["ambiguous_variant"]);
+  const [named] = toDraftLines([{ rawText: "paip PVC 3 inci class D", itemText: "PVC pipe 3 inch Class D", qty: 8, unit: null, aiConfidence: 0.9 }], pipes);
+  assert.equal(named?.product?.id, 11, "a class the customer named is kept");
 });

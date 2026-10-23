@@ -136,6 +136,12 @@ export function toDraftLines(items: ExtractedItem[], catalog: CatalogProduct[]) 
       const alt = matchProduct(item.rawText, catalog);
       if (alt.product || alt.options.length > match.options.length) match = alt;
     }
+    // Never let the extractor pick a variant the customer did not name ("paip 3 inci, class mana murah?"):
+    // if their own words still fit several variants, a human chooses.
+    if (match.product?.variantGroup && item.rawText !== item.itemText) {
+      const own = matchProduct(item.rawText, catalog);
+      if (own.flags.includes("ambiguous_variant") && own.options.some(o => o.id === match.product!.id)) match = own;
+    }
     const flags = [...match.flags];
     let confidence = match.confidence;
     if (item.aiConfidence !== undefined) {

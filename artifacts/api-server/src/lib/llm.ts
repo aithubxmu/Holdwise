@@ -4,10 +4,11 @@
  * Uses plain fetch, so no provider SDK is needed.
  */
 export type Provider = "gemini" | "anthropic" | "openai";
-export interface LlmConfig { provider: Provider; apiKey: string; model: string }
+export interface LlmConfig { provider: Provider; apiKey: string; model: string; fallbackModel: string | null }
 
 const DEFAULT_MODEL: Record<Provider, string> = {
-  gemini: "gemini-2.5-flash",
+  // gemini-2.5-flash is closed to new keys (404); 3.5-flash answered in ~2 s on the free tier (Oct 2026).
+  gemini: "gemini-3.5-flash",
   anthropic: "claude-haiku-5-5",
   openai: "gpt-4o-mini",
 };
@@ -18,8 +19,13 @@ export function llmConfigFromEnv(env: Record<string, string | undefined> = proce
   if (!apiKey) return null;
   const provider = (env.AI_PROVIDER?.trim().toLowerCase() || "gemini") as Provider;
   if (!(provider in DEFAULT_MODEL)) throw new Error(`Unknown AI_PROVIDER "${provider}"`);
-  return { provider, apiKey, model: env.AI_MODEL?.trim() || DEFAULT_MODEL[provider] };
+  return { provider, apiKey, model: env.AI_MODEL?.trim() || DEFAULT_MODEL[provider],
+    fallbackModel: env.AI_FALLBACK_MODEL?.trim() || FALLBACK_MODEL[provider] };
 }
+
+/** Tried once when the main model is overloaded (503) or rate-limited (429). */
+const FALLBACK_MODEL: Record<Provider, string | null> = { gemini: "gemini-flash-lite-latest", anthropic: null, openai: null };
+export const isBusy = (err: unknown) => /^(?:429|503)\b/.test(String((err as Error)?.message ?? ""));
 
 /** Sends one system + user prompt, asks for JSON, returns the model's raw text. */
 export async function callLlm(cfg: LlmConfig, system: string, user: string, signal: AbortSignal): Promise<string> {

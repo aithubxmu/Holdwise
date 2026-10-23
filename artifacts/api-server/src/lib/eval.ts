@@ -31,7 +31,7 @@ export async function runEval(mode: "ai" | "rules", catalog: EvalCatalogProduct[
   for (const m of set) {
     let x = await extractMessage(m.text, catalog, zones, { aiEnabled: mode === "ai", config });
     // Free tiers rate-limit bursts: wait once and retry before counting it as a fallback.
-    if (mode === "ai" && x.fallbackReason?.includes("429")) {
+    if (mode === "ai" && /\((?:429|503)\b/.test(x.fallbackReason ?? "")) {
       await new Promise(r => setTimeout(r, 7000));
       x = await extractMessage(m.text, catalog, zones, { aiEnabled: true, config });
     }

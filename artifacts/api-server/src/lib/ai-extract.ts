@@ -6,7 +6,7 @@
 import { z } from "zod";
 import { extractItems } from "./extract.ts";
 import { normalize, type CatalogProduct, type DeliveryZone, type ExtractedItem } from "./rules.ts";
-import { callLlm, type LlmConfig } from "./llm.ts";
+import { callLlm, isBusy, type LlmConfig } from "./llm.ts";
 
 /** Strict shape we accept from the model. Unknown keys (e.g. a "price") are dropped by zod. */
 export const AiExtractionSchema = z.object({
@@ -89,13 +89,24 @@ export async function extractMessage(text: string, catalog: CatalogProduct[], zo
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const { system, user } = buildPrompt(text, catalog, zones);
-    const ai = parseAiResponse(await (opts.call ?? callLlm)(opts.config, system, user, controller.signal));
+    const call = opts.call ?? callLlm;
+    let model = opts.config.model;
+    let raw: string;
+    try {
+      raw = await call(opts.config, system, user, controller.signal);
+    } catch (err) {
+      // Free tiers get busy: one retry on the lighter model, still inside the same 8 s budget.
+      if (!isBusy(err) || !opts.config.fallbackModel) throw err;
+      model = opts.config.fallbackModel;
+      raw = await call({ ...opts.config, model }, system, user, controller.signal);
+    }
+    const ai = parseAiResponse(raw);
     const items: ExtractedItem[] = ai.items.map(i => ({
       rawText: i.raw_text, itemText: i.product_guess, unit: i.unit, aiConfidence: i.confidence,
       // Only whole positive numbers count as a quantity; anything else goes to a human as "missing".
       qty: i.qty !== null && Number.isSafeInteger(i.qty) && i.qty > 0 ? i.qty : null,
     }));
-    return { items, parsedBy: "ai", deliveryZoneId: zoneFor(ai.delivery_area, zones), model: opts.config.model,
+    return { items, parsedBy: "ai", deliveryZoneId: zoneFor(ai.delivery_area, zones), model,
       latencyMs: Date.now() - started, fallbackReason: null, language: ai.language, notes: ai.notes };
   } catch (err) {
     const reason = controller.signal.aborted ? `AI timed out after ${timeoutMs / 1000} s`

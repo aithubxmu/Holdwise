@@ -72,9 +72,8 @@ press Reset demo data as Owner (see below) and click through once.
   the DB transaction.
 - Provider: `lib/llm.ts`, plain fetch. Env: `AI_PROVIDER` (gemini default |
   anthropic | openai), `AI_API_KEY` (secret), optional `AI_MODEL`
-  (default gemini-2.5-flash). Locally put them in a git-ignored `.env` at the
-  repo root; on Replit in Secrets. **No key has been tested live yet**: the AI
-  path is covered by unit tests with a stubbed model only.
+  (default gemini-3.5-flash). Locally put them in a git-ignored `.env` at the
+  repo root; on Replit in Secrets. Tested live with a free Gemini key on 23 Oct.
 - Settings (Owner, `?view=settings`): AI on/off, manual minutes per quote,
   simulated credit top-up. Stored as `setting_changed` log rows (no schema
   change); Reset demo data returns them to defaults.
@@ -82,7 +81,15 @@ press Reset demo data as Owner (see below) and click through once.
   expected SKU + qty). `pnpm --filter @workspace/api-server run eval` (no DB
   needed) or `?view=eval` (Owner, saved as `eval_run` log rows). Rules today:
   34/37 items (91.9%) overall, 100% on seed (it was tuned on them), 62.5% on
-  held-out. Run the AI eval once a key is set and use those numbers in the PRD.
+  held-out. First AI run (23 Oct, gemini-3.5-flash, before the variant rule
+  below): 35/37 items (94.6%), 87.5% on held-out, quantities 100% correct,
+  avg 5.9 s, but 5 of 20 calls fell back to rules (503 busy / 8 s timeout on the
+  free tier), so those rows are rules results. Re-run before quoting numbers.
+- A busy model (503/429) is retried once on `AI_FALLBACK_MODEL`
+  (gemini-flash-lite-latest) inside the same 8 s budget.
+- The extractor may not pick a variant the customer did not name: if the
+  customer's words still fit several variants, the line stays
+  `ambiguous_variant` for a human (AI had chosen Class B for "Class mana murah?").
 
 ## Dashboard (step 2, `?view=dashboard`, all roles)
 `lib/dashboard.ts`, GET `/api/dashboard`. Everything is counted from the DB:
