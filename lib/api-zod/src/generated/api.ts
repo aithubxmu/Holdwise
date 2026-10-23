@@ -491,6 +491,25 @@ export const ListActivityResponseItem = zod.object({
 export const ListActivityResponse = zod.array(ListActivityResponseItem)
 
 
+export const GetDashboardResponse = zod.object({
+  "quotesDrafted": zod.number().int(),
+  "sentToday": zod.number().int(),
+  "sentThisWeek": zod.number().int(),
+  "sentTotal": zod.number().int(),
+  "avgResponseMinutes": zod.number().nullable(),
+  "manualMinutesPerQuote": zod.number(),
+  "hoursSaved": zod.number().nullable(),
+  "flagsResolved": zod.array(zod.object({
+  "flag": zod.string(),
+  "count": zod.number().int()
+})),
+  "parsedByAi": zod.number().int(),
+  "parsedByRules": zod.number().int(),
+  "ownerApproved": zod.number().int(),
+  "awaitingApproval": zod.number().int()
+})
+
+
 export const GetSettingsResponse = zod.object({
   "aiExtraction": zod.boolean(),
   "manualMinutesPerQuote": zod.number(),

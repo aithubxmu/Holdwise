@@ -64,6 +64,28 @@ export interface DemoContext {
   milestone: string;
 }
 
+export type DashboardFlagsResolvedItem = {
+  flag: string;
+  count: number;
+};
+
+export interface Dashboard {
+  quotesDrafted: number;
+  sentToday: number;
+  sentThisWeek: number;
+  sentTotal: number;
+  /** @nullable */
+  avgResponseMinutes: number | null;
+  manualMinutesPerQuote: number;
+  /** @nullable */
+  hoursSaved: number | null;
+  flagsResolved: DashboardFlagsResolvedItem[];
+  parsedByAi: number;
+  parsedByRules: number;
+  ownerApproved: number;
+  awaitingApproval: number;
+}
+
 export type SettingsAi = {
   configured: boolean;
   /** @nullable */

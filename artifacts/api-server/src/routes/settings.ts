@@ -1,10 +1,11 @@
 import { Router, type IRouter } from "express";
 import { desc, eq } from "drizzle-orm";
 import { db, activityLog, products, deliveryZones } from "@workspace/db";
-import { GetSettingsResponse, UpdateSettingsBody, UpdateSettingsResponse, RunEvalBody, RunEvalResponse, GetLatestEvalResponse } from "@workspace/api-zod";
+import { GetDashboardResponse, GetSettingsResponse, UpdateSettingsBody, UpdateSettingsResponse, RunEvalBody, RunEvalResponse, GetLatestEvalResponse } from "@workspace/api-zod";
 import { getSettings, updateSettings } from "../lib/settings.ts";
 import { llmConfigFromEnv } from "../lib/llm.ts";
 import { runEval, type EvalResult } from "../lib/eval.ts";
+import { getDashboard } from "../lib/dashboard.ts";
 import { getActor } from "../lib/quotes.ts";
 import { HttpError } from "../lib/http-error.ts";
 
@@ -19,6 +20,9 @@ async function requireOwner(actorUserId: number) {
   if ((await getActor(actorUserId)).role !== "owner") throw new HttpError(403, "Only the owner can do this");
 }
 
+router.get("/dashboard", async (_req, res): Promise<void> => {
+  res.json(GetDashboardResponse.parse(await getDashboard()));
+});
 router.get("/settings", async (_req, res): Promise<void> => {
   res.json(GetSettingsResponse.parse(await settingsView()));
 });

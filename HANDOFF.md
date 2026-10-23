@@ -84,10 +84,18 @@ press Reset demo data as Owner (see below) and click through once.
   34/37 items (91.9%) overall, 100% on seed (it was tuned on them), 62.5% on
   held-out. Run the AI eval once a key is set and use those numbers in the PRD.
 
+## Dashboard (step 2, `?view=dashboard`, all roles)
+`lib/dashboard.ts`, GET `/api/dashboard`. Everything is counted from the DB:
+quotes sent (today in MYT / last 7 days / total), average response
+(sent_at − message received_at), time saved = sent × (owner's manual minutes −
+actual average) / 60 floored at 0, errors prevented = flags on the draft
+(`quote_drafted` log) that are no longer open, AI vs rules share, owner
+approvals. The manual minutes are an owner assumption from Settings and the page
+says so. With no quotes the page shows an empty state.
+
 ## Broken or unfinished
 - Live AI run and AI eval numbers need the Gemini key (see above).
-- Dashboard and Orbyte shell are the next two steps; POST `/api/messages`
-  webhook is not built.
+- Orbyte shell is the next step; POST `/api/messages` webhook is not built.
 - Role switching is a demo control, not authentication (by design).
 
 ## Next steps in order

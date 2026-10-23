@@ -9,7 +9,7 @@ import {
   useResetDemo,
   type DemoUserRole,
 } from "@workspace/api-client-react";
-import { Eye, FlaskConical, History, Inbox as InboxIcon, RefreshCw, RotateCcw, Send, Settings2, ShieldCheck, Wrench } from "lucide-react";
+import { BarChart3, Eye, FlaskConical, History, Inbox as InboxIcon, RefreshCw, RotateCcw, Send, Settings2, ShieldCheck, Wrench } from "lucide-react";
 import { refreshAll, type Actor } from "@/lib/actor";
 import { apiErrorMessage } from "@/lib/format";
 import { HealthDot } from "./shared";
@@ -18,6 +18,7 @@ import { Approvals } from "./approvals";
 import { Outbox } from "./outbox";
 import { ActivityLog } from "./activity";
 import { SettingsView } from "./settings";
+import { Dashboard } from "./dashboard";
 import { AiEval } from "./ai-eval";
 
 const ROLE_KEY = "quotelah.actingRole";
@@ -31,6 +32,7 @@ const VIEWS = [
   { id: "inbox", label: "Inbox", icon: InboxIcon },
   { id: "approvals", label: "Approvals", icon: ShieldCheck },
   { id: "outbox", label: "Outbox", icon: Send },
+  { id: "dashboard", label: "Dashboard", icon: BarChart3 },
   { id: "activity", label: "Activity log", icon: History },
   { id: "eval", label: "AI eval", icon: FlaskConical, ownerOnly: true },
   { id: "settings", label: "Settings", icon: Settings2, ownerOnly: true },
@@ -85,7 +87,7 @@ export function App() {
   const user = ctx.data?.users.find((u) => u.role === role);
   const actor: Actor = { role, userId: user?.id ?? null, name: user?.name ?? role };
   const count = (s: string) => (messages.data ?? []).filter((m) => m.status === s).length;
-  const badges: Record<View, number> = { inbox: count("new") + count("needs_review"), approvals: count("awaiting_approval"), outbox: count("sent"), activity: 0, eval: 0, settings: 0 };
+  const badges: Record<View, number> = { inbox: count("new") + count("needs_review"), approvals: count("awaiting_approval"), outbox: count("sent"), activity: 0, eval: 0, settings: 0, dashboard: 0 };
   const refreshing = messages.isFetching || ctx.isFetching;
 
   return (
@@ -159,6 +161,7 @@ export function App() {
       {view === "inbox" && <Inbox actor={actor} selectedId={messageId} onSelect={setMessageId} />}
       {view === "approvals" && <Approvals actor={actor} onOpen={(m) => go("inbox", m)} />}
       {view === "outbox" && <Outbox onOpen={(m) => go("inbox", m)} />}
+      {view === "dashboard" && <Dashboard onOpenInbox={() => go("inbox")} />}
       {view === "activity" && <ActivityLog />}
       {view === "eval" && <AiEval actor={actor} />}
       {view === "settings" && <SettingsView actor={actor} />}

@@ -11,6 +11,8 @@ export * from './activityEntryDetails';
 export * from './actorRequest';
 export * from './apiError';
 export * from './catalogItem';
+export * from './dashboard';
+export * from './dashboardFlagsResolvedItem';
 export * from './demoContext';
 export * from './demoUser';
 export * from './demoUserRole';

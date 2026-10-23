@@ -161,6 +161,15 @@ paths:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/ActivityEntry" }
+  /dashboard:
+    get:
+      operationId: getDashboard
+      responses:
+        "200":
+          description: Benefit metrics computed from the database
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Dashboard" }
   /settings:
     get:
       operationId: getSettings
@@ -276,6 +285,30 @@ components:
         customerCount: { type: integer }
         zoneCount: { type: integer }
         milestone: { type: string }
+    Dashboard:
+      type: object
+      required: [quotesDrafted, sentToday, sentThisWeek, sentTotal, avgResponseMinutes, manualMinutesPerQuote, hoursSaved,
+        flagsResolved, parsedByAi, parsedByRules, ownerApproved, awaitingApproval]
+      properties:
+        quotesDrafted: { type: integer }
+        sentToday: { type: integer }
+        sentThisWeek: { type: integer }
+        sentTotal: { type: integer }
+        avgResponseMinutes: { type: [number, "null"] }
+        manualMinutesPerQuote: { type: number }
+        hoursSaved: { type: [number, "null"] }
+        flagsResolved:
+          type: array
+          items:
+            type: object
+            required: [flag, count]
+            properties:
+              flag: { type: string }
+              count: { type: integer }
+        parsedByAi: { type: integer }
+        parsedByRules: { type: integer }
+        ownerApproved: { type: integer }
+        awaitingApproval: { type: integer }
     Settings:
       type: object
       required: [aiExtraction, manualMinutesPerQuote, startingCredits, ai]
