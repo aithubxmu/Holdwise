@@ -58,8 +58,10 @@ Delivery areas: ${zones.map(z => z.name).join(", ")}`;
 
 /** Parses and validates the model's text. Throws on anything that is not the expected JSON. */
 export function parseAiResponse(raw: string): AiExtraction {
-  const json = raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, "");
-  return AiExtractionSchema.parse(JSON.parse(json));
+  // Models without a JSON mode (GLM on RunPod) may add a reasoning preamble or code fences:
+  // keep only the outermost {...}; zod still rejects anything that is not exactly our shape.
+  const start = raw.indexOf("{"), end = raw.lastIndexOf("}");
+  return AiExtractionSchema.parse(JSON.parse(start >= 0 && end > start ? raw.slice(start, end + 1) : raw));
 }
 
 /** Maps a delivery area named by the model onto a known zone; unknown places are ignored. */
