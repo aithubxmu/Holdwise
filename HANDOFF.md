@@ -1,99 +1,84 @@
 # QuoteLah handoff
 
 ## Current milestone and status
-M2 — rules foundation complete; UI remains M1 until M3. API and Next.js workflows
-run. Production frontend build passed; `/` and `/inbox` HTML and their referenced
-assets were checked in the export directory. `/api/health` returns `{"ok":true}`
-and `/inbox` returns 200 through the development proxy. All 13 M2 unit tests and
-the backend TypeScript check pass. No end-to-end browser test suite was run.
-The user now requests a production repair and republish; this supersedes the
-initial no-deployment instruction. Publishing must be initiated by the user.
+M4 done. The five-step journey works end to end: inbox → draft quotation →
+staff review and fixes → owner approval when required → simulated WhatsApp
+send with stock reservation, every step in the activity log.
+
+Verified locally (branch `feat/m3-m4-quote-journey`) against a real Postgres
+wire-protocol server: 19 rule unit tests, workspace typecheck, production
+static export of the frontend, an API journey script (40 checks: roles,
+approval routing, return with comment, stock reservation, locking after send,
+self-pickup, unknown items, missing quantities, price override, discount),
+and a click-through in the browser of the full flow plus mobile width.
+**Not yet verified on the published Replit URL**: publish this revision, then
+press Reset demo data as Owner (see below) and click through once.
+
+## Publishing this revision on Replit
+1. Pull the branch into the Repl (or merge it into `main` first).
+2. The post-merge script runs `pnpm install` and `drizzle-kit push`. There are
+   **no schema changes** in M3/M4, so the push is a no-op.
+3. Publish.
+4. Existing databases still hold the old "Demo Customer 01" rows (the seed
+   never overwrites data). Act as **Owner** and press **Reset demo data** once to
+   load the renamed customers and fixed zones.
 
 ## What works
-- PostgreSQL schema for users, customers, delivery zones, products, messages,
-  quotes, quote items, and activity log.
-- Transactional, repeat-safe seed: 40 products with aliases, three low-stock
-  products, 10 invented customers, six zones, three simulated users, 15 enquiries.
-- Seeded receipt events in activity log; no invented sent/approved states.
-- Read APIs for inbox and demo metadata, with generated response validation.
-- Next.js inbox and simulated role selection.
-- Full Apache 2.0 license and ignore rules for secrets/dependencies/build output.
+- Schema (unchanged since M1): users, customers, delivery zones, products,
+  messages, quotes, quote items, activity log.
+- Seed in `lib/db/src/demo/` (`seedDemo`, `resetDemo`), shared by
+  `scripts/src/seed.ts` and `POST /api/demo/reset` (owner only).
+- API (`artifacts/api-server/src/`):
+  - `lib/rules.ts` and `lib/extract.ts`: pure extraction, matching, pricing and
+    routing. `priceStoredLines` reprices persisted (edited) lines.
+  - `lib/quotes.ts`: draft, line edits, discount, actions, send.
+  - `lib/activity.ts`: log reads with one-line summaries.
+  - `routes/quotes.ts`: the endpoints in `lib/api-spec/openapi.yaml`.
+- Web (`artifacts/quotelah/components/`): `app.tsx` shell with tabs
+  (`?view=inbox|approvals|outbox|activity`, `?m=<messageId>`), `inbox.tsx`,
+  `quote-panel.tsx` + `quote-line.tsx` editor, `approvals.tsx`, `outbox.tsx`,
+  `activity.tsx`, `whatsapp-quote.tsx`.
+
+## Rules worth knowing
+- Money is integer sen in code, `numeric(12,2)` in the DB.
+- `quote_items.qty` is NOT NULL, so a missing quantity is stored as 0 and
+  flagged `missing_quantity`.
+- `quote_items.flags` stores only review flags from extraction
+  (`unknown_item`, `ambiguous_variant`, `low_confidence`). Picking a product
+  clears them; `confirm` clears `low_confidence`. Stock and quantity flags are
+  recomputed on every read.
+- Price override = stored unit price differs from the current catalogue price.
+- Any edit returns the quote to `drafted`/`needs_review`, withdrawing a pending
+  approval request. Sent quotes are locked (409).
+- Routing: flags block sending for everyone. Total > RM 500, discount > 5% or a
+  price override → only the Owner can send (`approve`, or `send` as Owner).
+  Viewer gets 403 on every write.
+- Send reserves stock with `SELECT … FOR UPDATE` in the same transaction.
+- Delivery zone: a zone named in the message wins, "pickup"/"ambil sendiri"
+  means Self-pickup (RM 0), otherwise the customer's home zone.
 
 ## Broken or unfinished
-M3–M7 functionality is intentionally not implemented yet. No persisted quotation
-generation, line editing, approvals, outbox, stock reservation,
-dashboard, product settings, reset button, or incoming POST webhook.
-Role switching is a client-side demo choice, not authentication.
-The screenshot browser reported a development HMR WebSocket proxy warning;
-the page and data rendered successfully.
-
-## Production serving repair
-Production logs identified the root cause:
-`static artifact publicDir does not exist ... artifacts/quotelah/dist/public`
-followed by `static handler not found for matched path`.
-The frontend had been converted to Next.js, but the artifact retained the Vite
-static directory. The API was unaffected.
-
-Fixed by enabling Next.js static export (`output: "export"`), setting the
-artifact's production publicDir to `artifacts/quotelah/out` through validated
-manifest replacement, and adding an explicit `/inbox` page. The existing
-`/*` → `/index.html` fallback is retained. Deployment build command remains
-`pnpm --filter @workspace/quotelah run build`; frontend needs no Node run command
-because production serves the exported files. The separate API service keeps
-its existing build/run commands. Removed the obsolete `next start` serve script,
-which is not compatible with static export.
-
-Added GET `/api/health` returning `{"ok":true}` without changing `/api/healthz`.
-Production build succeeds and exports `/` and `/inbox`. User must publish this
-revision before live checks can pass. Do not claim that preview verification
-means the published deployment has been repaired.
+- M5: AI extraction (strict JSON, zod, 8 s timeout, rules fallback). `parsedBy`
+  is always `rules` today.
+- M6: dashboard, settings, POST `/api/messages` webhook.
+- Role switching is a demo control, not authentication (by design).
 
 ## Next steps in order
-1. Publish the serving repair; verify live `/`, `/inbox`, assets and `/api/health`.
-2. M3: persistent editable quote drafts, resolvable flags and before/after logs.
-3. M4: owner approvals, simulated outbox and atomic stock reservation.
-4. M5: strict AI JSON extraction, Zod validation, eight-second timeout/fallback.
-5. M6: dashboard, settings, owner-only reset, POST /api/messages.
-6. M7: polish and checks.
+1. Publish, reset demo data, click through the journey on the live URL.
+2. M6 dashboard (quotes sent, average response time, flags caught, time saved
+   with the assumption labelled).
+3. M5 AI extraction with fallback, if time allows.
 
 ## Local operation
-See README for commands. Required environment names: DATABASE_URL and PORT.
-No AI credentials required. Use pnpm, `@workspace/db` push for development schema,
-`@workspace/scripts` seed for non-destructive initial data. API and frontend
-workflows must both run. Root typecheck: `pnpm run typecheck`.
-
-## Data model notes
-Money uses exact PostgreSQL numeric columns; API business calculations must use
-integer cents in later milestones. Stock and reserved quantities are constrained
-nonnegative and reserved cannot exceed stock. Messages/quotes use a shared status
-enum. Quote items allow null product, unit price and line total for unknown items.
-All timestamps are timezone-aware. No quote or item rows exist before M2/M3.
-The seed uses an advisory transaction lock and never wipes existing work.
+Required env names: `DATABASE_URL`, `PORT`. See README for commands.
+`pnpm run typecheck`, `pnpm --filter @workspace/api-server run test`.
+After changing `lib/api-spec/openapi.yaml`: `pnpm --filter @workspace/api-spec run codegen`.
+On macOS the lockfile has only linux-x64 native binaries (Replit); a local
+`next build` needs the darwin builds of lightningcss, @tailwindcss/oxide and
+@next/swc on `NODE_PATH`. Do not change the lockfile for that.
 
 ## Decisions and why
-- Next.js App Router frontend with existing shared Express API: satisfies the
-  requested frontend stack while preserving the provided API routing and codegen.
-- Only M1 in this increment, following the brief's "Start with M1 now".
-- All initial messages are new, so the app does not imply unimplemented approvals
-  or sends have happened.
-- Seeded identities are fictional; the role selector is not real authentication.
-- Publishing is now requested; the original no-deployment preference is superseded.
-
-## M2 implementation and boundaries
-`artifacts/api-server/src/lib/extract.ts` exports `extractItems(text, catalog?, zones?)`.
-M3 must supply the current catalog and zones; no hardcoded inventory is inside
-the extractor. `rules.ts` contains pure matching, integer-sen pricing, discounts,
-delivery selection, stock checks and approval routing. `rules.test.ts` has 13
-passing tests. Run `pnpm --filter @workspace/api-server run test`.
-
-Unknown/ambiguous matches remain unresolved, missing quantities remain null, and
-invalid quantities cannot send. Repeated lines consume available stock
-cumulatively in the preview calculation. Actual reservation remains M4 and must
-be transactional. Multiple delivery zones raise a review error rather than
-silently selecting one. Partial totals explicitly report `totalsComplete: false`.
-M3 must display unresolved flags and not treat incomplete totals as a final quote.
-Rules are not yet wired to a creation endpoint; that is M3.
-
-Last live checks after the repair was prepared still returned HTTP 500 for `/`
-and `/inbox`: production still serves the old revision. Live verification is
-pending republish, not passed.
+- No schema changes in M3/M4 so publishing cannot break the live database.
+- Single page with `?view=` instead of new Next routes: the static export is
+  served with an `index.html` fallback, so extra routes would add risk.
+- Approvals return with a mandatory comment so staff know what to change.

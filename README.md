@@ -4,19 +4,30 @@ A synthetic hardware-shop quotation demo for SDC Hackathon 2026, Domain 2:
 Orbyte Smart SME Challenge (Alpha Red Solutions).
 
 QuoteLah turns messy Malay, English and Manglish WhatsApp enquiries into
-human-reviewed quotations. **Current release: M2 rules foundation; UI remains the M1 inbox.**
+human-reviewed quotations. **Current release: M4. The full five-step journey works end to end.**
 
-## Planned five-step journey
+## The five-step journey
 1. Receive a simulated customer enquiry.
 2. Connect catalog, prices, stock, customer type and delivery zone.
 3. Extract items with AI or rules; calculate all prices and routing deterministically.
 4. Staff review; Owner approval for consequential quotations.
 5. Send to a simulated outbox, reserve stock, and log every action.
 
-The seeded inbox, customer context, search/filter/read, and simulated role
-selection are available in the UI. M2 adds tested pure extraction, matching,
-stock, pricing, delivery and approval-routing functions. The draft-editing UI
-and persistence come in M3; sending, dashboard, settings and webhook follow.
+What you can do in the app:
+- **Inbox**: pick an enquiry and press **Draft quotation**. Lines the rules could not
+  settle are flagged (not in catalogue, which variant, unsure match, no quantity,
+  not enough stock) with the fix next to them.
+- **Review**: pick a variant or product, change quantity or price, confirm a match,
+  remove a line, change the discount. Totals reprice instantly in integer sen.
+- **Approval routing**: staff send within limits. Over RM 500, a discount above 5%
+  or a changed unit price needs the Owner, who approves & sends or returns the quote
+  with a comment. Viewer is read only. The API enforces all of this, not just the UI.
+- **Send**: stock is reserved in a row-locked transaction, the quote is locked and
+  shown as a simulated WhatsApp message in the **Outbox**.
+- **Activity log**: every draft, edit, approval and send with actor and before/after.
+- **Reset demo data** (Owner): wipes quotes and restores the seeded demo.
+
+Dashboard, settings, the POST webhook and AI extraction (M5–M6) are not built yet.
 
 ## Safety and demo scope
 - Every record is invented, including the fictional shop "Ah Seng Hardware, Kajang".
@@ -43,25 +54,25 @@ serves Next.js at `/` and Express at `/api`. Outside Replit, provide an equivale
 reverse proxy routing `/api` to port 5000 and all other paths to port 3000.
 
 Seed runs are transactional and non-destructive: if demo users already exist,
-they preserve the existing data. The owner-only **Reset demo data** interface
-is planned for M6; there is no destructive reset command in M1.
+they preserve the existing data. To start over, act as Owner and press
+**Reset demo data** (POST `/api/demo/reset`), which wipes and reseeds in one transaction.
 
 ## AI versus rules
-M2 makes no AI calls and needs no AI key. Rule-based extraction and pure
+The app makes no AI calls yet and needs no AI key. Rule-based extraction and pure
 business rules are implemented in `artifacts/api-server/src/lib/`. M5 will add schema-validated AI extraction with an
 eight-second timeout and automatic rules fallback. AI will never set prices,
 invent catalog products, decide discounts, or approve quotations.
 
 ## Technology
 Next.js App Router, TypeScript, Tailwind CSS, Express API, PostgreSQL, Drizzle ORM,
-Zod, and generated React Query API clients. Built with Replit Agent.
+Zod, and generated React Query API clients. Built with Replit Agent and Claude Code
+(declared in the Tech & Tools Declaration).
 See `HANDOFF.md` for implementation status and next steps.
 
 ## Live URL
 https://quote-lah-hardware-quotation-mvp.replit.app
 
-The currently published revision has a frontend serving error. The repair is
-committed and awaits user-initiated republishing. Next.js exports static HTML
+Next.js exports static HTML
 and assets into `artifacts/quotelah/out`; the artifact serves that directory with
 an index.html fallback. API routes continue on the separate Express service.
 
@@ -71,7 +82,8 @@ pnpm --filter @workspace/api-server run test
 ```
 Tests cover aliases, variant ambiguity, unknown products, missing/invalid
 quantities, available stock (including repeated lines), discounts, rounding,
-delivery zones, approval boundaries, and three-day validity.
+delivery zones, approval boundaries, three-day validity, repricing of edited
+lines, price overrides, and punctuation/chatter in real-looking messages.
 
 ## License
 Apache License 2.0. See the full text in `LICENSE`.
