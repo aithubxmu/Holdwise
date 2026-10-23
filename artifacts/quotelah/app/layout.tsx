@@ -9,7 +9,7 @@ const body = Figtree({ subsets: ["latin"], variable: "--font-body" });
 const code = JetBrains_Mono({ subsets: ["latin"], variable: "--font-code", weight: ["400", "500"] });
 
 export const metadata: Metadata = {
-  title: "QuoteLah - WhatsApp enquiry inbox | Ah Seng Hardware",
+  title: "Holdwise - WhatsApp quotations | Ah Seng Hardware",
   description:
     "Turn messy WhatsApp hardware enquiries into reviewed quotations. Demo inbox for Ah Seng Hardware, Kajang, using synthetic data.",
 };

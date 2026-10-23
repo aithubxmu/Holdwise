@@ -17,7 +17,7 @@ const results = [await runEval("rules", catalog, zones, null)];
 if (config) results.push(await runEval("ai", catalog, zones, config));
 else console.log("No AI_API_KEY set: showing rules only.\n");
 
-console.log("QuoteLah extraction eval (synthetic test set, 20 messages: 15 seed + 5 held-out)\n");
+console.log("Holdwise extraction eval (synthetic test set, 20 messages: 15 seed + 5 held-out)\n");
 console.table(results.flatMap(r => (["all", "seed", "heldOut"] as const).map(part => ({
   parser: r.mode === "ai" ? `AI ${r.model}` : "rules", subset: part, ...r[part],
   avgLatencyMs: r.avgLatencyMs, fallbacks: r.fallbacks,

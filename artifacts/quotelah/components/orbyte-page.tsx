@@ -23,17 +23,17 @@ const ENDPOINTS = [
   ["GET", "/api/wallet", "Credit balance and usage"],
 ];
 
-/** How QuoteLah would plug into Orbyte as the missing Sales → Quotations module. */
+/** How Holdwise would plug into Orbyte as the missing Sales → Quotations module. */
 export function OrbytePage() {
   const wallet = useGetWallet();
   return (
     <main className="mx-auto w-full max-w-[1000px] flex-1 space-y-4 px-4 py-5 md:px-6" data-testid="view-orbyte">
       <div>
-        <h1 className="flex items-center gap-2 font-display text-2xl font-bold"><PlugZap className="h-6 w-6 text-teal" /> How QuoteLah connects to Orbyte</h1>
+        <h1 className="flex items-center gap-2 font-display text-2xl font-bold"><PlugZap className="h-6 w-6 text-teal" /> How Holdwise connects to Orbyte</h1>
         <p className="mt-1 text-sm text-ink-soft">
           Orbyte is a business hub for SMEs: one workspace and one sign-in, with shared clients, products, roles, approvals and audit trail,
           and one credit wallet charged per use. It has People, Hiring, Work, eSign and Connect today, but no sales module.
-          QuoteLah is that module: Sales → Quotations.
+          Holdwise is that module: Sales → Quotations.
         </p>
         <p className="mt-2 rounded-xl border border-dashed border-brick/40 bg-brick-wash/50 px-3 py-2 text-[13px] text-brick">
           Simulated. We have no access to the real Orbyte platform or WhatsApp. Each hub service below is played by our own table or log so the module can be shown working.
@@ -72,7 +72,7 @@ export function OrbytePage() {
         <section className="rounded-2xl border bg-card p-4" data-testid="panel-wallet">
           <h2 className="flex items-center gap-1.5 font-semibold"><Coins className="h-4 w-4 text-tape" /> Credit wallet (simulated)</h2>
           <p className="mt-0.5 text-[12px] text-ink-soft">
-            Orbyte charges when business happens, not per seat. QuoteLah uses {wallet.data?.perQuote ?? 1} credit per quotation actually sent: drafts, edits and returns are free.
+            Orbyte charges when business happens, not per seat. Holdwise uses {wallet.data?.perQuote ?? 1} credit per quotation actually sent: drafts, edits and returns are free.
           </p>
           {wallet.data && (
             <dl className="mt-3 grid grid-cols-3 gap-2 text-center">

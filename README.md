@@ -1,9 +1,9 @@
-# QuoteLah
+# Holdwise
 
 A synthetic hardware-shop quotation demo for SDC Hackathon 2026, Domain 2:
 Orbyte Smart SME Challenge (Alpha Red Solutions).
 
-QuoteLah turns messy Malay, English and Manglish WhatsApp enquiries into
+Holdwise turns messy Malay, English and Manglish WhatsApp enquiries into
 human-reviewed quotations. **Current release: M4. The full five-step journey works end to end.**
 
 ## The five-step journey
@@ -28,7 +28,7 @@ What you can do in the app:
 - **Reset demo data** (Owner): wipes quotes and restores the seeded demo.
 - **Dashboard**: quotes sent, response time vs the owner's manual estimate, hours
   saved, errors prevented, AI vs rules share. Counted from the database only.
-- **Orbyte module (simulated)**: QuoteLah is shown as the missing Sales →
+- **Orbyte module (simulated)**: Holdwise is shown as the missing Sales →
   Quotations module inside an Orbyte workspace, with a simulated credit wallet
   (1 credit per quote sent). There is no real Orbyte or WhatsApp integration.
 
@@ -54,7 +54,7 @@ PORT=5000 pnpm --filter @workspace/api-server run dev
 PORT=3000 pnpm --filter @workspace/quotelah run dev
 ```
 
-In Replit, run the existing QuoteLah and API Server workflows. The shared proxy
+In Replit, run the existing web app and API Server workflows. The shared proxy
 serves Next.js at `/` and Express at `/api`. Outside Replit, provide an equivalent
 reverse proxy routing `/api` to port 5000 and all other paths to port 3000.
 

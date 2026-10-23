@@ -100,9 +100,9 @@ export function App() {
       <header className="border-b bg-card/90 backdrop-blur">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3 md:px-6">
           <button onClick={() => go("inbox")} className="flex items-center gap-3 text-left">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-teal-deep font-display text-lg font-extrabold text-tape">Q</div>
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-teal-deep font-display text-lg font-extrabold text-tape">H</div>
             <div className="leading-tight">
-              <div className="font-display text-xl font-extrabold tracking-tight" data-testid="text-app-name">QuoteLah</div>
+              <div className="font-display text-xl font-extrabold tracking-tight" data-testid="text-app-name">Holdwise</div>
               <div className="text-xs text-ink-soft" data-testid="text-shop-name">
                 {ctx.isLoading ? <span className="skel inline-block h-3 w-32 align-middle" /> : ctx.data?.shopName ?? "Ah Seng Hardware"}
               </div>

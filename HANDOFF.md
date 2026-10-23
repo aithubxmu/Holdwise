@@ -1,4 +1,4 @@
-# QuoteLah handoff
+# Holdwise handoff
 
 ## Current milestone and status
 M4 done. The five-step journey works end to end: inbox → draft quotation →
@@ -104,7 +104,7 @@ says so. With no quotes the page shows an empty state.
 - `components/orbyte-shell.tsx`: dark "Orbyte workspace · Ah Seng Hardware" bar
   with "Connected to Orbyte (simulated)" and the credit balance; on ≥1024 px a
   left module list where People, Hiring, Work, eSign, Connect are greyed out and
-  Sales → Quotations (QuoteLah) is active.
+  Sales → Quotations (Holdwise) is active.
 - `components/orbyte-page.tsx` (`?view=orbyte`, all roles): which hub services
   the module reads/writes and which of our tables plays each one, the reusable
   JSON API, and the credit model. States clearly there is no real Orbyte or

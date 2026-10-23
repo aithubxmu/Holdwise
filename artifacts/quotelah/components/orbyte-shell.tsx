@@ -14,7 +14,7 @@ const OTHER_MODULES = [
 ];
 
 /**
- * Simulated Orbyte workspace around QuoteLah. There is no real Orbyte or WhatsApp integration;
+ * Simulated Orbyte workspace around Holdwise. There is no real Orbyte or WhatsApp integration;
  * the bar and sidebar only show where the module would live in the hub.
  */
 export function OrbyteShell({ shopName, onConnect, children }: { shopName: string; onConnect: () => void; children: ReactNode }) {
@@ -47,10 +47,10 @@ export function OrbyteShell({ shopName, onConnect, children }: { shopName: strin
           <div className="mt-4 px-2 text-[10px] font-semibold uppercase tracking-wider text-ink-soft">Sales</div>
           <div className="mt-1 flex items-center gap-2 rounded-lg bg-teal-deep px-2 py-1.5 text-[13px] font-semibold text-white" aria-current="page">
             <Receipt className="h-4 w-4 text-tape" />
-            <span className="flex-1">Quotations<span className="block text-[10px] font-normal text-white/70">QuoteLah · new module</span></span>
+            <span className="flex-1">Quotations<span className="block text-[10px] font-normal text-white/70">Holdwise · new module</span></span>
           </div>
           <p className="mt-6 px-2 text-[11px] leading-snug text-ink-soft">
-            Orbyte has no sales module today. QuoteLah adds Sales → Quotations on top of the hub's shared clients, products, roles, approvals and audit trail.
+            Orbyte has no sales module today. Holdwise adds Sales → Quotations on top of the hub's shared clients, products, roles, approvals and audit trail.
           </p>
         </aside>
         <div className="relative min-w-0 flex-1">{children}</div>

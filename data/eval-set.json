@@ -1,5 +1,5 @@
 {
-  "description": "Synthetic evaluation set for QuoteLah message extraction. 'seed' messages are the demo inbox (the rules parser was tuned on them); 'held_out' messages were written separately and never used to tune the rules. Expected items use catalogue SKUs; sku null means the right outcome is a flag for a human (expect_flag). qty null means the customer gave no quantity.",
+  "description": "Synthetic evaluation set for Holdwise message extraction. 'seed' messages are the demo inbox (the rules parser was tuned on them); 'held_out' messages were written separately and never used to tune the rules. Expected items use catalogue SKUs; sku null means the right outcome is a flag for a human (expect_flag). qty null means the customer gave no quantity.",
   "messages": [
     { "id": "seed-01", "set": "seed", "text": "boss, nak 20 bag simen + 5 batang paip PVC 2 inci, hantar Bangi esok, berapa?", "zone": "Bangi",
       "expected": [{ "sku": "QL-001", "qty": 20 }, { "sku": null, "expect_flag": "ambiguous_variant", "qty": 5 }] },

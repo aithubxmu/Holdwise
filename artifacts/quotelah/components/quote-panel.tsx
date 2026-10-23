@@ -43,7 +43,7 @@ export function QuotePanel({ messageId, quoteId, actor }: { messageId: number; q
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold text-teal-deep">No quotation yet</div>
           <p className="mt-0.5 text-[13px] text-ink-soft">
-            QuoteLah reads the message, matches items to the catalogue, checks stock and prices them with the shop's rules.
+            Holdwise reads the message, matches items to the catalogue, checks stock and prices them with the shop's rules.
             Anything unclear is flagged for a person.
           </p>
         </div>
