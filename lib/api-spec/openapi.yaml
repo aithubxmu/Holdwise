@@ -170,6 +170,15 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Dashboard" }
+  /wallet:
+    get:
+      operationId: getWallet
+      responses:
+        "200":
+          description: Simulated Orbyte credit wallet
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Wallet" }
   /settings:
     get:
       operationId: getSettings
@@ -285,6 +294,14 @@ components:
         customerCount: { type: integer }
         zoneCount: { type: integer }
         milestone: { type: string }
+    Wallet:
+      type: object
+      required: [startingCredits, used, balance, perQuote]
+      properties:
+        startingCredits: { type: integer }
+        used: { type: integer }
+        balance: { type: integer }
+        perQuote: { type: integer }
     Dashboard:
       type: object
       required: [quotesDrafted, sentToday, sentThisWeek, sentTotal, avgResponseMinutes, manualMinutesPerQuote, hoursSaved,

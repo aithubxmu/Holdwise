@@ -49,3 +49,4 @@ export * from './resetDemo200';
 export * from './settings';
 export * from './settingsAi';
 export * from './settingsUpdate';
+export * from './wallet';

@@ -64,6 +64,13 @@ export interface DemoContext {
   milestone: string;
 }
 
+export interface Wallet {
+  startingCredits: number;
+  used: number;
+  balance: number;
+  perQuote: number;
+}
+
 export type DashboardFlagsResolvedItem = {
   flag: string;
   count: number;

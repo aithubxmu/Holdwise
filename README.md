@@ -26,8 +26,13 @@ What you can do in the app:
   shown as a simulated WhatsApp message in the **Outbox**.
 - **Activity log**: every draft, edit, approval and send with actor and before/after.
 - **Reset demo data** (Owner): wipes quotes and restores the seeded demo.
+- **Dashboard**: quotes sent, response time vs the owner's manual estimate, hours
+  saved, errors prevented, AI vs rules share. Counted from the database only.
+- **Orbyte module (simulated)**: QuoteLah is shown as the missing Sales →
+  Quotations module inside an Orbyte workspace, with a simulated credit wallet
+  (1 credit per quote sent). There is no real Orbyte or WhatsApp integration.
 
-Dashboard, settings, the POST webhook and AI extraction (M5–M6) are not built yet.
+The POST webhook for inbound messages is not built yet.
 
 ## Safety and demo scope
 - Every record is invented, including the fictional shop "Ah Seng Hardware, Kajang".

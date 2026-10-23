@@ -510,6 +510,14 @@ export const GetDashboardResponse = zod.object({
 })
 
 
+export const GetWalletResponse = zod.object({
+  "startingCredits": zod.number().int(),
+  "used": zod.number().int(),
+  "balance": zod.number().int(),
+  "perQuote": zod.number().int()
+})
+
+
 export const GetSettingsResponse = zod.object({
   "aiExtraction": zod.boolean(),
   "manualMinutesPerQuote": zod.number(),

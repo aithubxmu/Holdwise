@@ -17,6 +17,7 @@ function summarize(action: string, entity: string, entityId: number | null, d: D
     case "stock_reserved": return `Reserved stock for ${q}: ${(d.after ?? []).map((r: Details) => `${r.qty} × ${r.product}`).join(", ")}`;
     case "setting_changed": return `Changed setting ${d.key}: ${JSON.stringify(d.before)} → ${JSON.stringify(d.after)}`;
     case "eval_run": return `Ran the extraction eval (${d.mode === "ai" ? `AI ${d.model}` : "rules"}): ${d.all?.extractionAccuracyPct}% items correct`;
+    case "credit_charged": return `Charged ${d.credits} Orbyte credit for ${q} (simulated): balance ${d.before?.balance} → ${d.after?.balance}`;
     case "quote_sent": return `Sent ${q} to the customer (RM ${d.after?.totalRm}, simulated WhatsApp)`;
     default: return `${action.replaceAll("_", " ")} on ${entity} #${entityId}`;
   }

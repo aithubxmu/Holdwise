@@ -4,6 +4,7 @@ import { db, messages, customers, deliveryZones, products, quotes, quoteItems, a
 import { extractMessage } from "./ai-extract.ts";
 import { llmConfigFromEnv } from "./llm.ts";
 import { getSettings } from "./settings.ts";
+import { getWallet, CREDITS_PER_QUOTE } from "./wallet.ts";
 import { matchProduct, deliveryZone, priceStoredLines, toDraftLines, toSen, fromSen, discounts,
   type CatalogProduct, type DeliveryZone, type Flag, type StoredLine } from "./rules.ts";
 import { HttpError } from "./http-error.ts";
@@ -243,6 +244,9 @@ export async function quoteAction(quoteId: number, actorUserId: number, action: 
 
 /** Reserves stock atomically (row locks) and marks the quote sent. */
 async function sendQuote(tx: Tx, loaded: Loaded, actorId: number) {
+  // Orbyte charges per transaction: no credits, no send (the owner tops up in Settings).
+  const wallet = await getWallet(tx);
+  if (wallet.balance < CREDITS_PER_QUOTE) throw new HttpError(409, "The Orbyte credit wallet is empty. The owner can top up in Settings");
   const wanted = new Map<number, number>();
   for (const i of loaded.items) if (i.productId !== null) wanted.set(i.productId, (wanted.get(i.productId) ?? 0) + i.qty);
   const ids = [...wanted.keys()];
@@ -260,6 +264,9 @@ async function sendQuote(tx: Tx, loaded: Loaded, actorId: number) {
   await tx.update(messages).set({ status: "sent" }).where(eq(messages.id, loaded.quote.messageId));
   await log(tx, actorId, "stock_reserved", "quote", loaded.quote.id, {
     before: null, after: locked.map(p => ({ product: p.name, qty: wanted.get(p.id), reservedBefore: p.reservedQty, reservedAfter: p.reservedQty + wanted.get(p.id)! })),
+  });
+  await log(tx, actorId, "credit_charged", "quote", loaded.quote.id, {
+    before: { balance: wallet.balance }, after: { balance: wallet.balance - CREDITS_PER_QUOTE }, credits: CREDITS_PER_QUOTE, simulated: true,
   });
   await log(tx, actorId, "quote_sent", "quote", loaded.quote.id, {
     before: { status: loaded.quote.status }, after: { status: "sent", totalRm: loaded.quote.total, channel: "simulated_whatsapp" },

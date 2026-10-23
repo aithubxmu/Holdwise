@@ -93,9 +93,23 @@ actual average) / 60 floored at 0, errors prevented = flags on the draft
 approvals. The manual minutes are an owner assumption from Settings and the page
 says so. With no quotes the page shows an empty state.
 
+## Orbyte module framing (step 3, all simulated)
+- `components/orbyte-shell.tsx`: dark "Orbyte workspace · Ah Seng Hardware" bar
+  with "Connected to Orbyte (simulated)" and the credit balance; on ≥1024 px a
+  left module list where People, Hiring, Work, eSign, Connect are greyed out and
+  Sales → Quotations (QuoteLah) is active.
+- `components/orbyte-page.tsx` (`?view=orbyte`, all roles): which hub services
+  the module reads/writes and which of our tables plays each one, the reusable
+  JSON API, and the credit model. States clearly there is no real Orbyte or
+  WhatsApp connection.
+- Credit wallet: `lib/wallet.ts`. Each sent quote writes a `credit_charged` log
+  row (1 credit); balance = Settings top-up (default 100) − charges; GET
+  `/api/wallet`. An empty wallet blocks sending with a 409 asking the owner to
+  top up. Still no schema change.
+
 ## Broken or unfinished
 - Live AI run and AI eval numbers need the Gemini key (see above).
-- Orbyte shell is the next step; POST `/api/messages` webhook is not built.
+- POST `/api/messages` webhook is not built.
 - Role switching is a demo control, not authentication (by design).
 
 ## Next steps in order
