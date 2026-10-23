@@ -9,6 +9,8 @@ import type { InboxMessageCustomerType } from './inboxMessageCustomerType';
 import type { InboxMessageStatus } from './inboxMessageStatus';
 
 export interface InboxMessage {
+  /** @nullable */
+  quoteId: number | null;
   id: number;
   customerId: number;
   customerName: string;

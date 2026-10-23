@@ -10,7 +10,8 @@ export const normalize = (text: string) => text.toLowerCase()
   .replace(/(\d)\s*"/g, "$1 inch").replace(/\binci\b/g, "inch")
   .replace(/\bpaip\b/g, "pipe").replace(/\b(?:semen|simen)\b/g, "cement")
   .replace(/\b(?:kelas|class)\s*([bd])\b/g, "class $1")
-  .replace(/[^a-z0-9.]+/g, " ").trim().replace(/\s+/g, " ");
+  // Keep decimal points ("1.5") but drop sentence dots ("roof sheet.", "Hantar Putrajaya.").
+  .replace(/[^a-z0-9.]+/g, " ").replace(/(?<!\d)\.|\.(?!\d)/g, " ").trim().replace(/\s+/g, " ");
 
 function contains(haystack: string, needle: string) {
   return ` ${haystack} `.includes(` ${needle} `);
@@ -79,6 +80,48 @@ export function approvalRouting(totalSen: number, discountPct: number, priceOver
   return { status: flags.length ? "needs_review" : reasons.length ? "awaiting_approval" : "drafted", reasons,
     canSend: { owner: flags.length === 0, staff: flags.length === 0 && reasons.length === 0, viewer: false } };
 }
+/** A persisted quote line. qty 0 means "quantity missing". reviewFlags are extraction flags a human must clear. */
+export interface StoredLine { id: number; productId: number | null; qty: number; unitPriceSen: number | null; reviewFlags: Flag[] }
+export const REVIEW_FLAGS: readonly Flag[] = ["unknown_item", "ambiguous_variant", "low_confidence"];
+/** Reprices persisted lines against the live catalogue. Stock and quantity flags are always recomputed. */
+export function priceStoredLines(input: {
+  lines: StoredLine[]; catalog: CatalogProduct[]; discountPct: number; deliverySen: number; approvalThresholdSen?: number;
+}) {
+  const used = new Map<number, number>();
+  let priceOverridden = false;
+  const lines = input.lines.map(line => {
+    const product = line.productId === null ? null : input.catalog.find(p => p.id === line.productId) ?? null;
+    const flags: Flag[] = product
+      ? line.reviewFlags.filter(f => f === "low_confidence")
+      : line.reviewFlags.some(f => f === "unknown_item" || f === "ambiguous_variant")
+        ? line.reviewFlags.filter(f => f !== "low_confidence") : ["unknown_item"];
+    if (line.qty <= 0) flags.push("missing_quantity");
+    const available = product ? product.stockQty - product.reservedQty : null;
+    if (product && line.qty > 0) {
+      const totalQty = (used.get(product.id) ?? 0) + line.qty;
+      used.set(product.id, totalQty);
+      if (totalQty > available!) flags.push("insufficient_stock");
+    }
+    const catalogPriceSen = product ? toSen(product.priceRm) : null;
+    const unitPriceSen = product ? line.unitPriceSen ?? catalogPriceSen : null;
+    if (product && unitPriceSen !== catalogPriceSen) priceOverridden = true;
+    const lineTotalSen = unitPriceSen !== null && line.qty > 0 ? unitPriceSen * line.qty : null;
+    if (lineTotalSen !== null && !Number.isSafeInteger(lineTotalSen)) throw new Error("Line amount exceeds safe range");
+    return { ...line, product, flags, available, catalogPriceSen, unitPriceSen, lineTotalSen };
+  });
+  const { discountPct, deliverySen } = input;
+  if (!Number.isFinite(discountPct) || discountPct < 0 || discountPct > 100) throw new Error("Invalid discount");
+  const subtotalSen = lines.reduce((sum, line) => sum + (line.lineTotalSen ?? 0), 0);
+  const discountSen = Math.round(subtotalSen * discountPct / 100);
+  const totalSen = subtotalSen - discountSen + deliverySen;
+  const flags = lines.flatMap(line => line.flags);
+  if (!lines.length) flags.push("unknown_item");
+  return { lines, subtotalSen, discountPct, discountSen, deliverySen, totalSen, priceOverridden, flags,
+    totalsComplete: lines.length > 0 && lines.every(line => line.lineTotalSen !== null),
+    ...approvalRouting(totalSen, discountPct, priceOverridden, flags, input.approvalThresholdSen),
+  };
+}
+export const fromSen = (sen: number) => (sen / 100).toFixed(2);
 export function calculateQuote(input: {
   items: ExtractedItem[]; catalog: CatalogProduct[]; customerType: keyof typeof discounts;
   zone: DeliveryZone; now: Date; discountPct?: number; priceOverridden?: boolean; approvalThresholdSen?: number;

@@ -5,7 +5,9 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./schema": "./src/schema/index.ts"
+    "./schema": "./src/schema/index.ts",
+    "./demo": "./src/demo/seed.ts",
+    "./demo/seed-data": "./src/demo/seed-data.ts"
   },
   "scripts": {
     "push": "drizzle-kit push --config ./drizzle.config.ts",

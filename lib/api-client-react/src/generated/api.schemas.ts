@@ -27,6 +27,8 @@ export const InboxMessageStatus = {
 } as const;
 
 export interface InboxMessage {
+  /** @nullable */
+  quoteId: number | null;
   id: number;
   customerId: number;
   customerName: string;
@@ -62,11 +64,216 @@ export interface DemoContext {
   milestone: string;
 }
 
+export interface ApiError {
+  error: string;
+}
+
+export interface ActorRequest {
+  actorUserId: number;
+}
+
+export interface QuoteUpdate {
+  actorUserId: number;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  discountPct: number;
+}
+
+export interface QuoteItemUpdate {
+  actorUserId: number;
+  productId?: number;
+  /** @minimum 0 */
+  qty?: number;
+  /** @pattern ^\d+(\.\d{1,2})?$ */
+  unitPriceRm?: string;
+  /** Staff confirms a low-confidence match */
+  confirm?: boolean;
+  remove?: boolean;
+}
+
+export type QuoteActionRequestAction = typeof QuoteActionRequestAction[keyof typeof QuoteActionRequestAction];
+
+
+export const QuoteActionRequestAction = {
+  send: 'send',
+  request_approval: 'request_approval',
+  approve: 'approve',
+  return: 'return',
+} as const;
+
+export interface QuoteActionRequest {
+  actorUserId: number;
+  action: QuoteActionRequestAction;
+  /** @maxLength 500 */
+  comment?: string;
+}
+
+export interface CatalogItem {
+  id: number;
+  sku: string;
+  name: string;
+  unit: string;
+  priceRm: string;
+  available: number;
+  category: string;
+  /** @nullable */
+  variantGroup: string | null;
+}
+
+export interface QuoteOption {
+  id: number;
+  name: string;
+  priceRm: string;
+  available: number;
+}
+
+export type QuoteLineFlagsItem = typeof QuoteLineFlagsItem[keyof typeof QuoteLineFlagsItem];
+
+
+export const QuoteLineFlagsItem = {
+  unknown_item: 'unknown_item',
+  ambiguous_variant: 'ambiguous_variant',
+  low_confidence: 'low_confidence',
+  missing_quantity: 'missing_quantity',
+  invalid_quantity: 'invalid_quantity',
+  insufficient_stock: 'insufficient_stock',
+} as const;
+
+export interface QuoteLine {
+  id: number;
+  rawText: string;
+  /** @nullable */
+  productId: number | null;
+  /** @nullable */
+  productName: string | null;
+  /** @nullable */
+  unit: string | null;
+  qty: number;
+  /** @nullable */
+  unitPriceRm: string | null;
+  /** @nullable */
+  catalogPriceRm: string | null;
+  /** @nullable */
+  lineTotalRm: string | null;
+  confidence: number;
+  flags: QuoteLineFlagsItem[];
+  /** @nullable */
+  available: number | null;
+  options: QuoteOption[];
+}
+
+export type QuoteDetailCustomerType = typeof QuoteDetailCustomerType[keyof typeof QuoteDetailCustomerType];
+
+
+export const QuoteDetailCustomerType = {
+  walk_in: 'walk_in',
+  regular: 'regular',
+  contractor: 'contractor',
+} as const;
+
+export type QuoteDetailStatus = typeof QuoteDetailStatus[keyof typeof QuoteDetailStatus];
+
+
+export const QuoteDetailStatus = {
+  new: 'new',
+  drafted: 'drafted',
+  needs_review: 'needs_review',
+  awaiting_approval: 'awaiting_approval',
+  sent: 'sent',
+  rejected: 'rejected',
+} as const;
+
+export type QuoteDetailParsedBy = typeof QuoteDetailParsedBy[keyof typeof QuoteDetailParsedBy];
+
+
+export const QuoteDetailParsedBy = {
+  ai: 'ai',
+  rules: 'rules',
+} as const;
+
+export type QuoteDetailCanSend = {
+  owner: boolean;
+  staff: boolean;
+  viewer: boolean;
+};
+
+export interface QuoteDetail {
+  id: number;
+  messageId: number;
+  messageBody: string;
+  receivedAt: string;
+  customerName: string;
+  customerType: QuoteDetailCustomerType;
+  customerPhone: string;
+  deliveryZone: string;
+  status: QuoteDetailStatus;
+  parsedBy: QuoteDetailParsedBy;
+  lines: QuoteLine[];
+  subtotalRm: string;
+  discountPct: number;
+  discountRm: string;
+  deliveryRm: string;
+  totalRm: string;
+  totalsComplete: boolean;
+  approvalReasons: string[];
+  openFlags: number;
+  canSend: QuoteDetailCanSend;
+  needsOwner: boolean;
+  createdAt: string;
+  /** @nullable */
+  sentAt: string | null;
+  validUntil: string;
+  /** @nullable */
+  lastComment: string | null;
+}
+
+export type ActivityEntryDetails = { [key: string]: unknown };
+
+export interface ActivityEntry {
+  id: number;
+  at: string;
+  /** @nullable */
+  actorName: string | null;
+  /** @nullable */
+  actorRole: string | null;
+  action: string;
+  entity: string;
+  /** @nullable */
+  entityId: number | null;
+  summary: string;
+  details: ActivityEntryDetails;
+}
+
 export interface HealthStatus {
   status: string;
 }
 
 export type GetHealth200 = {
+  ok: boolean;
+};
+
+export type ListQuotesParams = {
+status?: ListQuotesStatus;
+};
+
+export type ListQuotesStatus = typeof ListQuotesStatus[keyof typeof ListQuotesStatus];
+
+
+export const ListQuotesStatus = {
+  drafted: 'drafted',
+  needs_review: 'needs_review',
+  awaiting_approval: 'awaiting_approval',
+  sent: 'sent',
+  rejected: 'rejected',
+} as const;
+
+export type ListActivityParams = {
+quoteId?: number;
+};
+
+export type ResetDemo200 = {
   ok: boolean;
 };
 

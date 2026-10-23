@@ -11,12 +11,18 @@ export function extractItems(text: string, catalog: CatalogProduct[] = [], zones
   const items: ExtractedItem[] = [];
   const parts = text.split(/\s*(?:\+|,|;|\n|\band\b|\bdan\b)\s*/i);
   for (const rawText of parts) {
-    const cleaned = rawText
-      .replace(/^.*?\b(?:nak|need|quote|harga|order|bagi)\s+/i, "")
-      .replace(/^(?:hi|hello|morning|boss|please|can|boleh|tolong)\b[ ,]*/gi, "")
+    // Trailing chatter goes first, so "pasir halus berapa harga sekarang" keeps "pasir halus".
+    // A bare zone name ("2 tray. Kajang.") is delivery info, not part of the item.
+    const withoutZones = zones.reduce((text, z) =>
+      text.replace(new RegExp(`\\b${z.name.replace(/[^a-z0-9]+/gi, "[\\s-]*")}\\b`, "gi"), ""), rawText);
+    const cleaned = withoutZones
       .replace(/\b(?:hantar|delivery|self[ -]?pickup|pickup)\b.*$/i, "")
       .replace(/\b(?:esok|petang|please|berapa|ada stock|regular price)\b.*$/i, "")
-      .replace(/[?!]+/g, "").trim();
+      // Greedy: "...boleh bagi harga 4 tin cat" drops everything before the quantity.
+      .replace(/^.*\b(?:nak|need|quote|harga|order|bagi)\s+(?=\d)/i, "")
+      .replace(/^.*?\b(?:nak|need|quote|harga|order|bagi)\s+/i, "")
+      .replace(/^(?:hi|hello|morning|boss|please|can|boleh|tolong)\b[ ,]*/gi, "")
+      .replace(/[?!]+/g, "").replace(/[.,\s]+$/, "").trim();
     if (!cleaned) continue;
     const prefix = cleaned.match(new RegExp(`^(-?\\d+(?:\\.\\d+)?)\\s*(?:(${units})\\b\\s*)?(.+)$`, "i"));
     const suffix = cleaned.match(new RegExp(`^(.+?)\\s+(-?\\d+(?:\\.\\d+)?)\\s*(${units})\\b.*$`, "i"));

@@ -1,4 +1,25 @@
-import type { InboxMessageCustomerType, InboxMessageStatus } from "@workspace/api-client-react";
+import type { InboxMessageCustomerType, InboxMessageStatus, QuoteLineFlagsItem } from "@workspace/api-client-react";
+
+export function rm(value: string | null | undefined) {
+  if (value == null) return "—";
+  return "RM " + Number(value).toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+export const FLAG_META: Record<QuoteLineFlagsItem, { label: string; hint: string }> = {
+  unknown_item: { label: "Not in catalogue", hint: "Pick a product, or remove the line" },
+  ambiguous_variant: { label: "Which one?", hint: "Several products match. Pick the right one" },
+  low_confidence: { label: "Unsure match", hint: "Confirm the product or pick another" },
+  missing_quantity: { label: "No quantity", hint: "Enter how many the customer wants" },
+  invalid_quantity: { label: "Bad quantity", hint: "Enter a whole number above zero" },
+  insufficient_stock: { label: "Not enough stock", hint: "Lower the quantity or offer something else" },
+};
+
+/** The `{ error }` text the API sends back, falling back to the fetch error message. */
+export function apiErrorMessage(error: unknown) {
+  const data = (error as { data?: { error?: unknown } } | null)?.data;
+  if (data && typeof data.error === "string") return data.error;
+  return error instanceof Error ? error.message : "Something went wrong";
+}
 
 export const STATUS_META: Record<InboxMessageStatus, { label: string; cls: string; dot: string }> = {
   new: { label: "New", cls: "bg-tape-wash text-ink", dot: "bg-tape" },

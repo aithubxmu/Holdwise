@@ -41,6 +41,23 @@ export const productSeeds: ProductSeed[] = [
   ["Work gloves", "pair", 3.5, 60, "Safety", ["sarung tangan", "gloves"]],
   ["Safety glasses", "piece", 7.5, 30, "Safety", ["cermin mata keselamatan", "safety glasses"]],
 ];
+export const zoneSeeds: [string, number][] = [
+  ["Kajang", 15], ["Bangi", 25], ["Semenyih", 30], ["Cheras", 35], ["Putrajaya", 40], ["Self-pickup", 0],
+];
+// Fictional names, marked "(demo)". Home zones are delivery areas only; self-pickup comes from the message.
+type CustomerSeed = [string, "walk_in" | "regular" | "contractor", string];
+export const customerSeeds: CustomerSeed[] = [
+  ["Faiz Rahman (demo)", "walk_in", "Kajang"],
+  ["Siti Aminah (demo)", "regular", "Bangi"],
+  ["Lim Bina Construction (demo)", "contractor", "Semenyih"],
+  ["Rajesh Kumar (demo)", "walk_in", "Cheras"],
+  ["Tan Mei Hua (demo)", "regular", "Putrajaya"],
+  ["Hafiz Jaya Renovation (demo)", "contractor", "Kajang"],
+  ["Wong Ah Lian (demo)", "walk_in", "Kajang"],
+  ["Aisyah Kamal (demo)", "regular", "Bangi"],
+  ["Kumar Brothers Builders (demo)", "contractor", "Semenyih"],
+  ["Daniel Lee (demo)", "walk_in", "Cheras"],
+];
 export const messageSeeds = [
   "boss, nak 20 bag simen + 5 batang paip PVC 2 inci, hantar Bangi esok, berapa?",
   "Hi, boleh quote 10 bag simen and 2 tin cat putih? Self pickup.",
