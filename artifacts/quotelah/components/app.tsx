@@ -77,7 +77,20 @@ export function App() {
   const health = useHealthCheck();
   const { view, messageId, go, setMessageId } = useUrlState();
   const [role, setRole] = useState<DemoUserRole>("staff");
-  const reset = useResetDemo({ mutation: { onSuccess: () => refreshAll(qc), onError: (e) => window.alert(apiErrorMessage(e)) } });
+  // Two-click confirm on the button itself: browser dialogs (confirm/alert) are silently blocked
+  // inside embedded previews such as Replit's, which made the old button do nothing.
+  const [resetArmed, setResetArmed] = useState(false);
+  const [resetNote, setResetNote] = useState<string | null>(null);
+  const reset = useResetDemo({ mutation: {
+    onSuccess: () => { setResetNote("Demo data restored"); refreshAll(qc); },
+    onError: (e) => setResetNote(apiErrorMessage(e)),
+    onSettled: () => setResetArmed(false),
+  } });
+  useEffect(() => {
+    if (!resetArmed && !resetNote) return;
+    const t = setTimeout(() => { setResetArmed(false); setResetNote(null); }, 4000);
+    return () => clearTimeout(t);
+  }, [resetArmed, resetNote]);
 
   useEffect(() => {
     const saved = window.localStorage.getItem(ROLE_KEY);
@@ -149,13 +162,21 @@ export function App() {
             </span>
             {role === "owner" && (
               <button
-                onClick={() => user && window.confirm("Wipe all quotes and restore the demo data?") && reset.mutate({ data: { actorUserId: user.id } })}
-                disabled={reset.isPending}
-                className="flex items-center gap-1 font-semibold text-brick hover:underline disabled:opacity-60"
+                onClick={() => {
+                  if (!user) return;
+                  if (!resetArmed) { setResetNote(null); setResetArmed(true); return; }
+                  reset.mutate({ data: { actorUserId: user.id } });
+                }}
+                disabled={reset.isPending || !user}
+                className={`flex items-center gap-1 rounded px-1 font-semibold text-brick hover:underline disabled:opacity-60 ${resetArmed ? "bg-brick text-white" : ""}`}
                 data-testid="button-reset-demo"
               >
-                <RotateCcw className={`h-3 w-3 ${reset.isPending ? "spin" : ""}`} /> Reset demo data
+                <RotateCcw className={`h-3 w-3 ${reset.isPending ? "spin" : ""}`} />
+                {reset.isPending ? "Resetting…" : resetArmed ? "Click again to wipe all quotes" : "Reset demo data"}
               </button>
+            )}
+            {role === "owner" && resetNote && (
+              <span className="font-semibold text-teal-deep" role="status" data-testid="text-reset-note">{resetNote}</span>
             )}
             <span className="ml-auto font-mono">Demo data only. All customers, phones and messages are synthetic.</span>
           </div>
