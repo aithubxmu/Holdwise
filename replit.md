@@ -1,4 +1,4 @@
-# QuoteLah
+# Holdwise
 
 Synthetic Malaysian hardware quotation demo. See README.md and HANDOFF.md for scope and progress.
 

@@ -7,7 +7,7 @@ function summarize(action: string, entity: string, entityId: number | null, d: D
   const q = `quote #${entityId}`;
   switch (action) {
     case "message_received": return `WhatsApp enquiry #${entityId} received`;
-    case "quote_drafted": return `Drafted ${q} from message #${d.messageId}: ${d.after?.lines ?? 0} lines, ${d.after?.flags?.length ?? 0} flags, delivery ${d.after?.deliveryZone}`;
+    case "quote_drafted": return `Drafted ${q} from message #${d.messageId} (read by ${d.parsedBy === "ai" ? `AI ${d.model}` : "rules"}${d.fallbackReason ? `: ${d.fallbackReason}` : ""}): ${d.after?.lines ?? 0} lines, ${d.after?.flags?.length ?? 0} flags, delivery ${d.after?.deliveryZone}`;
     case "line_updated": return `Edited line "${d.rawText}" on ${q}`;
     case "line_removed": return `Removed line "${d.rawText}" from ${q}`;
     case "discount_changed": return `Discount on ${q}: ${d.before?.discountPct}% → ${d.after?.discountPct}%`;
@@ -15,6 +15,9 @@ function summarize(action: string, entity: string, entityId: number | null, d: D
     case "approval_returned": return `Returned ${q} to staff: "${d.comment}"`;
     case "quote_approved": return `Approved ${q}`;
     case "stock_reserved": return `Reserved stock for ${q}: ${(d.after ?? []).map((r: Details) => `${r.qty} × ${r.product}`).join(", ")}`;
+    case "setting_changed": return `Changed setting ${d.key}: ${JSON.stringify(d.before)} → ${JSON.stringify(d.after)}`;
+    case "eval_run": return `Ran the extraction eval (${d.mode === "ai" ? `AI ${d.model}` : "rules"}): ${d.all?.extractionAccuracyPct}% items correct`;
+    case "credit_charged": return `Charged ${d.credits} Orbyte credit for ${q} (simulated): balance ${d.before?.balance} → ${d.after?.balance}`;
     case "quote_sent": return `Sent ${q} to the customer (RM ${d.after?.totalRm}, simulated WhatsApp)`;
     default: return `${action.replaceAll("_", " ")} on ${entity} #${entityId}`;
   }

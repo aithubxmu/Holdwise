@@ -9,7 +9,7 @@ import {
   useResetDemo,
   type DemoUserRole,
 } from "@workspace/api-client-react";
-import { Eye, History, Inbox as InboxIcon, RefreshCw, RotateCcw, Send, ShieldCheck, Wrench } from "lucide-react";
+import { BarChart3, Eye, FlaskConical, PlugZap, History, Inbox as InboxIcon, RefreshCw, RotateCcw, Send, Settings2, ShieldCheck, Wrench } from "lucide-react";
 import { refreshAll, type Actor } from "@/lib/actor";
 import { apiErrorMessage } from "@/lib/format";
 import { HealthDot } from "./shared";
@@ -17,6 +17,11 @@ import { Inbox } from "./inbox";
 import { Approvals } from "./approvals";
 import { Outbox } from "./outbox";
 import { ActivityLog } from "./activity";
+import { SettingsView } from "./settings";
+import { Dashboard } from "./dashboard";
+import { OrbyteShell } from "./orbyte-shell";
+import { OrbytePage } from "./orbyte-page";
+import { AiEval } from "./ai-eval";
 
 const ROLE_KEY = "quotelah.actingRole";
 const ROLES: { role: DemoUserRole; label: string; note: string }[] = [
@@ -29,7 +34,11 @@ const VIEWS = [
   { id: "inbox", label: "Inbox", icon: InboxIcon },
   { id: "approvals", label: "Approvals", icon: ShieldCheck },
   { id: "outbox", label: "Outbox", icon: Send },
+  { id: "dashboard", label: "Dashboard", icon: BarChart3 },
   { id: "activity", label: "Activity log", icon: History },
+  { id: "orbyte", label: "Orbyte", icon: PlugZap },
+  { id: "eval", label: "AI eval", icon: FlaskConical, ownerOnly: true },
+  { id: "settings", label: "Settings", icon: Settings2, ownerOnly: true },
 ] as const;
 export type View = (typeof VIEWS)[number]["id"];
 
@@ -81,18 +90,19 @@ export function App() {
   const user = ctx.data?.users.find((u) => u.role === role);
   const actor: Actor = { role, userId: user?.id ?? null, name: user?.name ?? role };
   const count = (s: string) => (messages.data ?? []).filter((m) => m.status === s).length;
-  const badges: Record<View, number> = { inbox: count("new") + count("needs_review"), approvals: count("awaiting_approval"), outbox: count("sent"), activity: 0 };
+  const badges: Record<View, number> = { inbox: count("new") + count("needs_review"), approvals: count("awaiting_approval"), outbox: count("sent"), activity: 0, eval: 0, settings: 0, dashboard: 0, orbyte: 0 };
   const refreshing = messages.isFetching || ctx.isFetching;
 
   return (
-    <div className="relative z-10 flex min-h-[100dvh] flex-col">
+    <OrbyteShell shopName={ctx.data?.shopName ?? "Ah Seng Hardware"} onConnect={() => go("orbyte")}>
+    <div className="relative z-10 flex min-h-full flex-col">
       <div className="tape-stripe h-1.5 w-full" aria-hidden />
       <header className="border-b bg-card/90 backdrop-blur">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3 md:px-6">
           <button onClick={() => go("inbox")} className="flex items-center gap-3 text-left">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-teal-deep font-display text-lg font-extrabold text-tape">Q</div>
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-teal-deep font-display text-lg font-extrabold text-tape">H</div>
             <div className="leading-tight">
-              <div className="font-display text-xl font-extrabold tracking-tight" data-testid="text-app-name">QuoteLah</div>
+              <div className="font-display text-xl font-extrabold tracking-tight" data-testid="text-app-name">Holdwise</div>
               <div className="text-xs text-ink-soft" data-testid="text-shop-name">
                 {ctx.isLoading ? <span className="skel inline-block h-3 w-32 align-middle" /> : ctx.data?.shopName ?? "Ah Seng Hardware"}
               </div>
@@ -123,7 +133,7 @@ export function App() {
           </div>
         </div>
         <nav className="mx-auto flex max-w-[1400px] gap-1 overflow-x-auto px-4 [scrollbar-width:none] md:px-6" aria-label="Sections">
-          {VIEWS.map(({ id, label, icon: Icon }) => (
+          {VIEWS.filter((v) => !("ownerOnly" in v) || role === "owner").map(({ id, label, icon: Icon }) => (
             <button key={id} onClick={() => go(id)} data-testid={`tab-${id}`} aria-current={view === id ? "page" : undefined}
               className={`flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-semibold transition ${view === id ? "border-teal text-ink" : "border-transparent text-ink-soft hover:text-ink"}`}>
               <Icon className="h-4 w-4" />
@@ -155,7 +165,12 @@ export function App() {
       {view === "inbox" && <Inbox actor={actor} selectedId={messageId} onSelect={setMessageId} />}
       {view === "approvals" && <Approvals actor={actor} onOpen={(m) => go("inbox", m)} />}
       {view === "outbox" && <Outbox onOpen={(m) => go("inbox", m)} />}
+      {view === "dashboard" && <Dashboard onOpenInbox={() => go("inbox")} />}
       {view === "activity" && <ActivityLog />}
+      {view === "eval" && <AiEval actor={actor} />}
+      {view === "settings" && <SettingsView actor={actor} />}
+      {view === "orbyte" && <OrbytePage />}
     </div>
+    </OrbyteShell>
   );
 }

@@ -8,10 +8,12 @@
 import type { QuoteDetailCanSend } from './quoteDetailCanSend';
 import type { QuoteDetailCustomerType } from './quoteDetailCustomerType';
 import type { QuoteDetailParsedBy } from './quoteDetailParsedBy';
+import type { QuoteDetailParser } from './quoteDetailParser';
 import type { QuoteDetailStatus } from './quoteDetailStatus';
 import type { QuoteLine } from './quoteLine';
 
 export interface QuoteDetail {
+  parser: QuoteDetailParser;
   id: number;
   messageId: number;
   messageBody: string;

@@ -4,7 +4,8 @@ export interface CatalogProduct {
   stockQty: number; reservedQty: number; variantGroup: string | null;
 }
 export type Flag = "unknown_item" | "ambiguous_variant" | "low_confidence" | "missing_quantity" | "invalid_quantity" | "insufficient_stock";
-export interface ExtractedItem { rawText: string; itemText: string; qty: number | null; unit: string | null }
+/** itemText is what we match against the catalogue; aiConfidence is set only when AI read the message. */
+export interface ExtractedItem { rawText: string; itemText: string; qty: number | null; unit: string | null; aiConfidence?: number }
 export interface Match { product: CatalogProduct | null; confidence: number; flags: Flag[]; options: CatalogProduct[] }
 export const normalize = (text: string) => text.toLowerCase()
   .replace(/(\d)\s*"/g, "$1 inch").replace(/\binci\b/g, "inch")
@@ -122,6 +123,35 @@ export function priceStoredLines(input: {
   };
 }
 export const fromSen = (sen: number) => (sen / 100).toFixed(2);
+
+/**
+ * Turns extracted items (from AI or rules) into draft lines. This is deterministic: the catalogue
+ * decides the product and the price, never the extractor. Below 0.7 AI confidence → low_confidence.
+ */
+export function toDraftLines(items: ExtractedItem[], catalog: CatalogProduct[]) {
+  return items.map(item => {
+    let match = matchProduct(item.itemText, catalog);
+    // AI may paraphrase; the customer's own words get a second chance before we give up.
+    if (!match.product && item.rawText !== item.itemText) {
+      const alt = matchProduct(item.rawText, catalog);
+      if (alt.product || alt.options.length > match.options.length) match = alt;
+    }
+    // Never let the extractor pick a variant the customer did not name ("paip 3 inci, class mana murah?"):
+    // if their own words still fit several variants, a human chooses.
+    if (match.product?.variantGroup && item.rawText !== item.itemText) {
+      const own = matchProduct(item.rawText, catalog);
+      if (own.flags.includes("ambiguous_variant") && own.options.some(o => o.id === match.product!.id)) match = own;
+    }
+    const flags = [...match.flags];
+    let confidence = match.confidence;
+    if (item.aiConfidence !== undefined) {
+      confidence = Math.min(confidence, item.aiConfidence);
+      if (match.product && item.aiConfidence < 0.7 && !flags.includes("low_confidence")) flags.push("low_confidence");
+    }
+    const qty = item.qty !== null && Number.isSafeInteger(item.qty) && item.qty > 0 ? item.qty : 0;
+    return { rawText: item.rawText, product: match.product, qty, confidence, reviewFlags: flags.filter(f => REVIEW_FLAGS.includes(f)) };
+  });
+}
 export function calculateQuote(input: {
   items: ExtractedItem[]; catalog: CatalogProduct[]; customerType: keyof typeof discounts;
   zone: DeliveryZone; now: Date; discountPct?: number; priceOverridden?: boolean; approvalThresholdSen?: number;

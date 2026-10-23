@@ -1,8 +1,11 @@
 /** Quote persistence: drafting, line edits, approval routing and send with stock reservation. */
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { db, messages, customers, deliveryZones, products, quotes, quoteItems, activityLog, users } from "@workspace/db";
-import { extractItems } from "./extract.ts";
-import { matchProduct, deliveryZone, priceStoredLines, toSen, fromSen, discounts, REVIEW_FLAGS,
+import { extractMessage } from "./ai-extract.ts";
+import { llmConfigFromEnv } from "./llm.ts";
+import { getSettings } from "./settings.ts";
+import { getWallet, CREDITS_PER_QUOTE } from "./wallet.ts";
+import { matchProduct, deliveryZone, priceStoredLines, toDraftLines, toSen, fromSen, discounts,
   type CatalogProduct, type DeliveryZone, type Flag, type StoredLine } from "./rules.ts";
 import { HttpError } from "./http-error.ts";
 
@@ -74,11 +77,18 @@ export async function getQuoteDetail(quoteId: number) {
       inArray(activityLog.action, ["approval_requested", "approval_returned", "quote_sent"])))
     .orderBy(desc(activityLog.id)).limit(1);
   const returned = lastDecision?.action === "approval_returned" ? (lastDecision.details as { comment?: string }).comment ?? null : null;
+  // How the message was read (AI model or rules fallback) is recorded on the draft's log entry.
+  const [drafted] = await db.select({ details: activityLog.details }).from(activityLog)
+    .where(and(eq(activityLog.entity, "quote"), eq(activityLog.entityId, quoteId), eq(activityLog.action, "quote_drafted"))).limit(1);
+  const d = (drafted?.details ?? {}) as { model?: string | null; latencyMs?: number; fallbackReason?: string | null;
+    language?: string | null; notes?: string | null; after?: { deliveryZone?: string } };
   const { quote, message, customer } = loaded;
   return {
     id: quote.id, messageId: message.id, messageBody: message.body, receivedAt: message.receivedAt.toISOString(),
     customerName: customer.name, customerType: customer.type, customerPhone: customer.phone,
-    deliveryZone: pickZone(message.body, customer.zoneId, zones).name, status: quote.status, parsedBy: quote.parsedBy,
+    deliveryZone: d.after?.deliveryZone ?? pickZone(message.body, customer.zoneId, zones).name, status: quote.status, parsedBy: quote.parsedBy,
+    parser: { model: d.model ?? null, latencyMs: d.latencyMs ?? null, fallbackReason: d.fallbackReason ?? null,
+      language: d.language ?? null, notes: d.notes ?? null },
     lines: priced.lines.map(line => ({
       id: line.id, rawText: loaded.items.find(i => i.id === line.id)!.rawText, productId: line.product?.id ?? null,
       productName: line.product?.name ?? null, unit: line.product?.unit ?? null, qty: line.qty,
@@ -102,35 +112,40 @@ export async function getQuoteDetail(quoteId: number) {
 export async function draftQuote(messageId: number, actorUserId: number) {
   const actor = await getActor(actorUserId);
   requireRole(actor, "owner", "staff");
+  const [existing] = await db.select({ id: quotes.id }).from(quotes).where(eq(quotes.messageId, messageId));
+  if (existing) return getQuoteDetail(existing.id);
+  const [found] = await db.select({ body: messages.body }).from(messages).where(eq(messages.id, messageId));
+  if (!found) throw new HttpError(404, "Message not found");
+  // Read the message with AI (or rules) before the DB transaction, so a slow model never holds locks.
+  const [catalog0, zones0, settings] = await Promise.all([loadCatalog(), loadZones(), getSettings()]);
+  const extraction = await extractMessage(found.body, catalog0, zones0, { aiEnabled: settings.aiExtraction, config: llmConfigFromEnv() });
+
   const id = await db.transaction(async tx => {
     await tx.execute(sql`SELECT pg_advisory_xact_lock(4182027, ${messageId})`);
-    const [existing] = await tx.select({ id: quotes.id }).from(quotes).where(eq(quotes.messageId, messageId));
-    if (existing) return existing.id;
+    const [again] = await tx.select({ id: quotes.id }).from(quotes).where(eq(quotes.messageId, messageId));
+    if (again) return again.id;
     const [row] = await tx.select({ message: messages, customer: customers }).from(messages)
       .innerJoin(customers, eq(messages.customerId, customers.id)).where(eq(messages.id, messageId));
     if (!row) throw new HttpError(404, "Message not found");
     const [catalog, zones] = await Promise.all([loadCatalog(tx), loadZones(tx)]);
-    const extraction = extractItems(row.message.body, catalog, zones);
-    const zone = pickZone(row.message.body, row.customer.zoneId, zones);
-    const drafted = extraction.items.map(item => {
-      const match = matchProduct(item.itemText, catalog);
-      const qty = item.qty !== null && Number.isSafeInteger(item.qty) && item.qty > 0 ? item.qty : 0;
-      return { item, match, qty };
-    });
+    const zone = zones.find(z => z.id === extraction.deliveryZoneId) ?? pickZone(row.message.body, row.customer.zoneId, zones);
+    // Deterministic from here on: the catalogue picks products and prices, never the extractor.
+    const drafted = toDraftLines(extraction.items, catalog);
     const discountPct = discounts[row.customer.type];
     const [quote] = await tx.insert(quotes).values({
       messageId, customerId: row.customer.id, status: "drafted", subtotal: "0", discountPct: String(discountPct),
       discountRm: "0", deliveryRm: zone.feeRm, total: "0", parsedBy: extraction.parsedBy,
       validUntil: new Date(Date.now() + 3 * DAY),
     }).returning();
-    if (drafted.length) await tx.insert(quoteItems).values(drafted.map(({ item, match, qty }) => ({
-      quoteId: quote!.id, rawText: item.rawText, productId: match.product?.id ?? null, qty,
-      unitPrice: match.product?.priceRm ?? null, confidence: match.confidence.toFixed(3),
-      flags: match.flags.filter(f => REVIEW_FLAGS.includes(f)),
+    if (drafted.length) await tx.insert(quoteItems).values(drafted.map(line => ({
+      quoteId: quote!.id, rawText: line.rawText, productId: line.product?.id ?? null, qty: line.qty,
+      unitPrice: line.product?.priceRm ?? null, confidence: line.confidence.toFixed(3), flags: line.reviewFlags,
     })));
     const after = await settle(tx, quote!.id);
     await log(tx, actor.id, "quote_drafted", "quote", quote!.id, {
-      before: null, after: { ...after, lines: drafted.length, deliveryZone: zone.name }, parsedBy: extraction.parsedBy, messageId,
+      before: null, after: { ...after, lines: drafted.length, deliveryZone: zone.name }, messageId,
+      parsedBy: extraction.parsedBy, model: extraction.model, latencyMs: extraction.latencyMs,
+      fallbackReason: extraction.fallbackReason, language: extraction.language, notes: extraction.notes,
     });
     return quote!.id;
   });
@@ -229,6 +244,9 @@ export async function quoteAction(quoteId: number, actorUserId: number, action: 
 
 /** Reserves stock atomically (row locks) and marks the quote sent. */
 async function sendQuote(tx: Tx, loaded: Loaded, actorId: number) {
+  // Orbyte charges per transaction: no credits, no send (the owner tops up in Settings).
+  const wallet = await getWallet(tx);
+  if (wallet.balance < CREDITS_PER_QUOTE) throw new HttpError(409, "The Orbyte credit wallet is empty. The owner can top up in Settings");
   const wanted = new Map<number, number>();
   for (const i of loaded.items) if (i.productId !== null) wanted.set(i.productId, (wanted.get(i.productId) ?? 0) + i.qty);
   const ids = [...wanted.keys()];
@@ -246,6 +264,9 @@ async function sendQuote(tx: Tx, loaded: Loaded, actorId: number) {
   await tx.update(messages).set({ status: "sent" }).where(eq(messages.id, loaded.quote.messageId));
   await log(tx, actorId, "stock_reserved", "quote", loaded.quote.id, {
     before: null, after: locked.map(p => ({ product: p.name, qty: wanted.get(p.id), reservedBefore: p.reservedQty, reservedAfter: p.reservedQty + wanted.get(p.id)! })),
+  });
+  await log(tx, actorId, "credit_charged", "quote", loaded.quote.id, {
+    before: { balance: wallet.balance }, after: { balance: wallet.balance - CREDITS_PER_QUOTE }, credits: CREDITS_PER_QUOTE, simulated: true,
   });
   await log(tx, actorId, "quote_sent", "quote", loaded.quote.id, {
     before: { status: loaded.quote.status }, after: { status: "sent", totalRm: loaded.quote.total, channel: "simulated_whatsapp" },

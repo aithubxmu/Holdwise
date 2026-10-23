@@ -64,6 +64,13 @@ export const DraftQuoteBody = zod.object({
 })
 
 export const DraftQuoteResponse = zod.object({
+  "parser": zod.object({
+  "model": zod.string().nullable(),
+  "latencyMs": zod.number().int().nullable(),
+  "fallbackReason": zod.string().nullable(),
+  "language": zod.string().nullable(),
+  "notes": zod.string().nullable()
+}),
   "id": zod.number().int(),
   "messageId": zod.number().int(),
   "messageBody": zod.string(),
@@ -120,6 +127,13 @@ export const ListQuotesQueryParams = zod.object({
 })
 
 export const ListQuotesResponseItem = zod.object({
+  "parser": zod.object({
+  "model": zod.string().nullable(),
+  "latencyMs": zod.number().int().nullable(),
+  "fallbackReason": zod.string().nullable(),
+  "language": zod.string().nullable(),
+  "notes": zod.string().nullable()
+}),
   "id": zod.number().int(),
   "messageId": zod.number().int(),
   "messageBody": zod.string(),
@@ -177,6 +191,13 @@ export const GetQuoteParams = zod.object({
 })
 
 export const GetQuoteResponse = zod.object({
+  "parser": zod.object({
+  "model": zod.string().nullable(),
+  "latencyMs": zod.number().int().nullable(),
+  "fallbackReason": zod.string().nullable(),
+  "language": zod.string().nullable(),
+  "notes": zod.string().nullable()
+}),
   "id": zod.number().int(),
   "messageId": zod.number().int(),
   "messageBody": zod.string(),
@@ -243,6 +264,13 @@ export const UpdateQuoteBody = zod.object({
 })
 
 export const UpdateQuoteResponse = zod.object({
+  "parser": zod.object({
+  "model": zod.string().nullable(),
+  "latencyMs": zod.number().int().nullable(),
+  "fallbackReason": zod.string().nullable(),
+  "language": zod.string().nullable(),
+  "notes": zod.string().nullable()
+}),
   "id": zod.number().int(),
   "messageId": zod.number().int(),
   "messageBody": zod.string(),
@@ -314,6 +342,13 @@ export const UpdateQuoteItemBody = zod.object({
 })
 
 export const UpdateQuoteItemResponse = zod.object({
+  "parser": zod.object({
+  "model": zod.string().nullable(),
+  "latencyMs": zod.number().int().nullable(),
+  "fallbackReason": zod.string().nullable(),
+  "language": zod.string().nullable(),
+  "notes": zod.string().nullable()
+}),
   "id": zod.number().int(),
   "messageId": zod.number().int(),
   "messageBody": zod.string(),
@@ -380,6 +415,13 @@ export const QuoteActionBody = zod.object({
 })
 
 export const QuoteActionResponse = zod.object({
+  "parser": zod.object({
+  "model": zod.string().nullable(),
+  "latencyMs": zod.number().int().nullable(),
+  "fallbackReason": zod.string().nullable(),
+  "language": zod.string().nullable(),
+  "notes": zod.string().nullable()
+}),
   "id": zod.number().int(),
   "messageId": zod.number().int(),
   "messageBody": zod.string(),
@@ -447,6 +489,244 @@ export const ListActivityResponseItem = zod.object({
   "details": zod.record(zod.string(), zod.unknown())
 })
 export const ListActivityResponse = zod.array(ListActivityResponseItem)
+
+
+export const GetDashboardResponse = zod.object({
+  "quotesDrafted": zod.number().int(),
+  "sentToday": zod.number().int(),
+  "sentThisWeek": zod.number().int(),
+  "sentTotal": zod.number().int(),
+  "avgResponseMinutes": zod.number().nullable(),
+  "manualMinutesPerQuote": zod.number(),
+  "hoursSaved": zod.number().nullable(),
+  "flagsResolved": zod.array(zod.object({
+  "flag": zod.string(),
+  "count": zod.number().int()
+})),
+  "parsedByAi": zod.number().int(),
+  "parsedByRules": zod.number().int(),
+  "ownerApproved": zod.number().int(),
+  "awaitingApproval": zod.number().int()
+})
+
+
+export const GetWalletResponse = zod.object({
+  "startingCredits": zod.number().int(),
+  "used": zod.number().int(),
+  "balance": zod.number().int(),
+  "perQuote": zod.number().int()
+})
+
+
+export const GetSettingsResponse = zod.object({
+  "aiExtraction": zod.boolean(),
+  "manualMinutesPerQuote": zod.number(),
+  "startingCredits": zod.number().int(),
+  "ai": zod.object({
+  "configured": zod.boolean(),
+  "provider": zod.string().nullable(),
+  "model": zod.string().nullable()
+})
+})
+
+
+export const updateSettingsBodyManualMinutesPerQuoteMax = 240;
+
+export const updateSettingsBodyStartingCreditsMin = 0;
+export const updateSettingsBodyStartingCreditsMax = 100000;
+
+
+
+export const UpdateSettingsBody = zod.object({
+  "actorUserId": zod.number().int(),
+  "aiExtraction": zod.boolean().optional(),
+  "manualMinutesPerQuote": zod.number().min(1).max(updateSettingsBodyManualMinutesPerQuoteMax).optional(),
+  "startingCredits": zod.number().int().min(updateSettingsBodyStartingCreditsMin).max(updateSettingsBodyStartingCreditsMax).optional()
+})
+
+export const UpdateSettingsResponse = zod.object({
+  "aiExtraction": zod.boolean(),
+  "manualMinutesPerQuote": zod.number(),
+  "startingCredits": zod.number().int(),
+  "ai": zod.object({
+  "configured": zod.boolean(),
+  "provider": zod.string().nullable(),
+  "model": zod.string().nullable()
+})
+})
+
+
+export const GetLatestEvalResponse = zod.object({
+  "ai": zod.union([zod.object({
+  "mode": zod.enum(['ai', 'rules']),
+  "model": zod.string().nullable(),
+  "ranAt": zod.string(),
+  "messages": zod.number().int(),
+  "avgLatencyMs": zod.number().int(),
+  "fallbacks": zod.number().int(),
+  "all": zod.object({
+  "itemsExpected": zod.number().int(),
+  "itemsCorrect": zod.number().int(),
+  "extractionAccuracyPct": zod.number().nullable(),
+  "qtyAccuracyPct": zod.number().nullable(),
+  "extraLines": zod.number().int(),
+  "flagsRaised": zod.number().int(),
+  "zoneAccuracyPct": zod.number().nullable()
+}),
+  "seed": zod.object({
+  "itemsExpected": zod.number().int(),
+  "itemsCorrect": zod.number().int(),
+  "extractionAccuracyPct": zod.number().nullable(),
+  "qtyAccuracyPct": zod.number().nullable(),
+  "extraLines": zod.number().int(),
+  "flagsRaised": zod.number().int(),
+  "zoneAccuracyPct": zod.number().nullable()
+}),
+  "heldOut": zod.object({
+  "itemsExpected": zod.number().int(),
+  "itemsCorrect": zod.number().int(),
+  "extractionAccuracyPct": zod.number().nullable(),
+  "qtyAccuracyPct": zod.number().nullable(),
+  "extraLines": zod.number().int(),
+  "flagsRaised": zod.number().int(),
+  "zoneAccuracyPct": zod.number().nullable()
+}),
+  "rows": zod.array(zod.object({
+  "id": zod.string(),
+  "set": zod.string(),
+  "text": zod.string(),
+  "expected": zod.number().int(),
+  "correct": zod.number().int(),
+  "qtyCorrect": zod.number().int(),
+  "extra": zod.number().int(),
+  "flags": zod.number().int(),
+  "parsedBy": zod.string(),
+  "fallbackReason": zod.string().nullable(),
+  "latencyMs": zod.number().int(),
+  "lines": zod.array(zod.object({
+  "rawText": zod.string(),
+  "product": zod.string().nullable(),
+  "qty": zod.number().int(),
+  "flags": zod.array(zod.string())
+}))
+}))
+}),zod.null()]),
+  "rules": zod.union([zod.object({
+  "mode": zod.enum(['ai', 'rules']),
+  "model": zod.string().nullable(),
+  "ranAt": zod.string(),
+  "messages": zod.number().int(),
+  "avgLatencyMs": zod.number().int(),
+  "fallbacks": zod.number().int(),
+  "all": zod.object({
+  "itemsExpected": zod.number().int(),
+  "itemsCorrect": zod.number().int(),
+  "extractionAccuracyPct": zod.number().nullable(),
+  "qtyAccuracyPct": zod.number().nullable(),
+  "extraLines": zod.number().int(),
+  "flagsRaised": zod.number().int(),
+  "zoneAccuracyPct": zod.number().nullable()
+}),
+  "seed": zod.object({
+  "itemsExpected": zod.number().int(),
+  "itemsCorrect": zod.number().int(),
+  "extractionAccuracyPct": zod.number().nullable(),
+  "qtyAccuracyPct": zod.number().nullable(),
+  "extraLines": zod.number().int(),
+  "flagsRaised": zod.number().int(),
+  "zoneAccuracyPct": zod.number().nullable()
+}),
+  "heldOut": zod.object({
+  "itemsExpected": zod.number().int(),
+  "itemsCorrect": zod.number().int(),
+  "extractionAccuracyPct": zod.number().nullable(),
+  "qtyAccuracyPct": zod.number().nullable(),
+  "extraLines": zod.number().int(),
+  "flagsRaised": zod.number().int(),
+  "zoneAccuracyPct": zod.number().nullable()
+}),
+  "rows": zod.array(zod.object({
+  "id": zod.string(),
+  "set": zod.string(),
+  "text": zod.string(),
+  "expected": zod.number().int(),
+  "correct": zod.number().int(),
+  "qtyCorrect": zod.number().int(),
+  "extra": zod.number().int(),
+  "flags": zod.number().int(),
+  "parsedBy": zod.string(),
+  "fallbackReason": zod.string().nullable(),
+  "latencyMs": zod.number().int(),
+  "lines": zod.array(zod.object({
+  "rawText": zod.string(),
+  "product": zod.string().nullable(),
+  "qty": zod.number().int(),
+  "flags": zod.array(zod.string())
+}))
+}))
+}),zod.null()])
+})
+
+
+export const RunEvalBody = zod.object({
+  "actorUserId": zod.number().int(),
+  "mode": zod.enum(['ai', 'rules'])
+})
+
+export const RunEvalResponse = zod.object({
+  "mode": zod.enum(['ai', 'rules']),
+  "model": zod.string().nullable(),
+  "ranAt": zod.string(),
+  "messages": zod.number().int(),
+  "avgLatencyMs": zod.number().int(),
+  "fallbacks": zod.number().int(),
+  "all": zod.object({
+  "itemsExpected": zod.number().int(),
+  "itemsCorrect": zod.number().int(),
+  "extractionAccuracyPct": zod.number().nullable(),
+  "qtyAccuracyPct": zod.number().nullable(),
+  "extraLines": zod.number().int(),
+  "flagsRaised": zod.number().int(),
+  "zoneAccuracyPct": zod.number().nullable()
+}),
+  "seed": zod.object({
+  "itemsExpected": zod.number().int(),
+  "itemsCorrect": zod.number().int(),
+  "extractionAccuracyPct": zod.number().nullable(),
+  "qtyAccuracyPct": zod.number().nullable(),
+  "extraLines": zod.number().int(),
+  "flagsRaised": zod.number().int(),
+  "zoneAccuracyPct": zod.number().nullable()
+}),
+  "heldOut": zod.object({
+  "itemsExpected": zod.number().int(),
+  "itemsCorrect": zod.number().int(),
+  "extractionAccuracyPct": zod.number().nullable(),
+  "qtyAccuracyPct": zod.number().nullable(),
+  "extraLines": zod.number().int(),
+  "flagsRaised": zod.number().int(),
+  "zoneAccuracyPct": zod.number().nullable()
+}),
+  "rows": zod.array(zod.object({
+  "id": zod.string(),
+  "set": zod.string(),
+  "text": zod.string(),
+  "expected": zod.number().int(),
+  "correct": zod.number().int(),
+  "qtyCorrect": zod.number().int(),
+  "extra": zod.number().int(),
+  "flags": zod.number().int(),
+  "parsedBy": zod.string(),
+  "fallbackReason": zod.string().nullable(),
+  "latencyMs": zod.number().int(),
+  "lines": zod.array(zod.object({
+  "rawText": zod.string(),
+  "product": zod.string().nullable(),
+  "qty": zod.number().int(),
+  "flags": zod.array(zod.string())
+}))
+}))
+})
 
 
 export const ResetDemoBody = zod.object({

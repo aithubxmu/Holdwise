@@ -43,7 +43,7 @@ export function QuotePanel({ messageId, quoteId, actor }: { messageId: number; q
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold text-teal-deep">No quotation yet</div>
           <p className="mt-0.5 text-[13px] text-ink-soft">
-            QuoteLah reads the message, matches items to the catalogue, checks stock and prices them with the shop's rules.
+            Holdwise reads the message, matches items to the catalogue, checks stock and prices them with the shop's rules.
             Anything unclear is flagged for a person.
           </p>
         </div>
@@ -93,9 +93,7 @@ function QuoteEditor({ quoteId, actor }: { quoteId: number; actor: Actor }) {
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="font-display text-lg font-bold">Quotation #{q.id}</h2>
         <span className={`rounded-lg px-2 py-0.5 text-xs font-semibold ${st.cls}`} data-testid="status-quote">{st.label}</span>
-        <span className="rounded-md border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-ink-soft" title="How the message was read">
-          Parsed by {q.parsedBy === "ai" ? "AI" : "rules"}
-        </span>
+        <ParserBadge q={q} />
         <span className="ml-auto font-mono text-[11px] text-ink-soft">{q.lines.length} lines · drafted {fullTime(q.createdAt)}</span>
       </div>
 
@@ -130,6 +128,23 @@ function QuoteEditor({ quoteId, actor }: { quoteId: number; actor: Actor }) {
       )}
       <Trail quoteId={quoteId} />
     </section>
+  );
+}
+
+/** Shows who read the message: the AI model, or the rules parser and why AI was not used. */
+function ParserBadge({ q }: { q: QuoteDetail }) {
+  const p = q.parser;
+  if (q.parsedBy === "ai")
+    return (
+      <span className="flex items-center gap-1 rounded-md bg-teal-wash px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-teal-deep" data-testid="badge-parser"
+        title={[p.language && `Language: ${p.language}`, p.notes, p.latencyMs !== null && `${p.latencyMs} ms`].filter(Boolean).join(" · ")}>
+        <Sparkles className="h-3 w-3" /> Parsed by AI ({p.model})
+      </span>
+    );
+  return (
+    <span className="rounded-md border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-ink-soft" data-testid="badge-parser" title={p.fallbackReason ?? undefined}>
+      Parsed by rules (fallback){p.fallbackReason ? `: ${p.fallbackReason}` : ""}
+    </span>
   );
 }
 

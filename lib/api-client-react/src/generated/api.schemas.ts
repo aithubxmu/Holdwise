@@ -64,6 +64,137 @@ export interface DemoContext {
   milestone: string;
 }
 
+export interface Wallet {
+  startingCredits: number;
+  used: number;
+  balance: number;
+  perQuote: number;
+}
+
+export type DashboardFlagsResolvedItem = {
+  flag: string;
+  count: number;
+};
+
+export interface Dashboard {
+  quotesDrafted: number;
+  sentToday: number;
+  sentThisWeek: number;
+  sentTotal: number;
+  /** @nullable */
+  avgResponseMinutes: number | null;
+  manualMinutesPerQuote: number;
+  /** @nullable */
+  hoursSaved: number | null;
+  flagsResolved: DashboardFlagsResolvedItem[];
+  parsedByAi: number;
+  parsedByRules: number;
+  ownerApproved: number;
+  awaitingApproval: number;
+}
+
+export type SettingsAi = {
+  configured: boolean;
+  /** @nullable */
+  provider: string | null;
+  /** @nullable */
+  model: string | null;
+};
+
+export interface Settings {
+  aiExtraction: boolean;
+  manualMinutesPerQuote: number;
+  startingCredits: number;
+  ai: SettingsAi;
+}
+
+export interface SettingsUpdate {
+  actorUserId: number;
+  aiExtraction?: boolean;
+  /**
+     * @minimum 1
+     * @maximum 240
+     */
+  manualMinutesPerQuote?: number;
+  /**
+     * @minimum 0
+     * @maximum 100000
+     */
+  startingCredits?: number;
+}
+
+export type EvalRequestMode = typeof EvalRequestMode[keyof typeof EvalRequestMode];
+
+
+export const EvalRequestMode = {
+  ai: 'ai',
+  rules: 'rules',
+} as const;
+
+export interface EvalRequest {
+  actorUserId: number;
+  mode: EvalRequestMode;
+}
+
+export interface EvalSummary {
+  itemsExpected: number;
+  itemsCorrect: number;
+  /** @nullable */
+  extractionAccuracyPct: number | null;
+  /** @nullable */
+  qtyAccuracyPct: number | null;
+  extraLines: number;
+  flagsRaised: number;
+  /** @nullable */
+  zoneAccuracyPct: number | null;
+}
+
+export type EvalRowLinesItem = {
+  rawText: string;
+  /** @nullable */
+  product: string | null;
+  qty: number;
+  flags: string[];
+};
+
+export interface EvalRow {
+  id: string;
+  set: string;
+  text: string;
+  expected: number;
+  correct: number;
+  qtyCorrect: number;
+  extra: number;
+  flags: number;
+  parsedBy: string;
+  /** @nullable */
+  fallbackReason: string | null;
+  latencyMs: number;
+  lines: EvalRowLinesItem[];
+}
+
+export type EvalResultMode = typeof EvalResultMode[keyof typeof EvalResultMode];
+
+
+export const EvalResultMode = {
+  ai: 'ai',
+  rules: 'rules',
+} as const;
+
+export interface EvalResult {
+  mode: EvalResultMode;
+  /** @nullable */
+  model: string | null;
+  ranAt: string;
+  messages: number;
+  avgLatencyMs: number;
+  fallbacks: number;
+  all: EvalSummary;
+  seed: EvalSummary;
+  heldOut: EvalSummary;
+  rows: EvalRow[];
+}
+
 export interface ApiError {
   error: string;
 }
@@ -164,6 +295,19 @@ export interface QuoteLine {
   options: QuoteOption[];
 }
 
+export type QuoteDetailParser = {
+  /** @nullable */
+  model: string | null;
+  /** @nullable */
+  latencyMs: number | null;
+  /** @nullable */
+  fallbackReason: string | null;
+  /** @nullable */
+  language: string | null;
+  /** @nullable */
+  notes: string | null;
+};
+
 export type QuoteDetailCustomerType = typeof QuoteDetailCustomerType[keyof typeof QuoteDetailCustomerType];
 
 
@@ -200,6 +344,7 @@ export type QuoteDetailCanSend = {
 };
 
 export interface QuoteDetail {
+  parser: QuoteDetailParser;
   id: number;
   messageId: number;
   messageBody: string;
@@ -271,6 +416,11 @@ export const ListQuotesStatus = {
 
 export type ListActivityParams = {
 quoteId?: number;
+};
+
+export type GetLatestEval200 = {
+  ai: EvalResult | null;
+  rules: EvalResult | null;
 };
 
 export type ResetDemo200 = {

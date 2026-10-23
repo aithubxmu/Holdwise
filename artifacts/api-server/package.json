@@ -7,8 +7,9 @@
     "test": "node --experimental-strip-types --test src/lib/*.test.ts",
     "dev": "export NODE_ENV=development && pnpm run build && pnpm run start",
     "build": "node ./build.mjs",
-    "start": "node --enable-source-maps ./dist/index.mjs",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "start": "node --env-file-if-exists=../../.env --enable-source-maps ./dist/index.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "eval": "node --env-file-if-exists=../../.env --experimental-strip-types src/eval-cli.ts"
   },
   "dependencies": {
     "@workspace/api-zod": "workspace:*",
@@ -18,7 +19,8 @@
     "drizzle-orm": "catalog:",
     "express": "^5.3.0",
     "pino": "^9.14.0",
-    "pino-http": "^10.5.0"
+    "pino-http": "^10.5.0",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
