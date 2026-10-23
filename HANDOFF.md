@@ -57,10 +57,37 @@ press Reset demo data as Owner (see below) and click through once.
 - Delivery zone: a zone named in the message wins, "pickup"/"ambil sendiri"
   means Self-pickup (RM 0), otherwise the customer's home zone.
 
+## AI extraction (step 1 of the AI/dashboard/Orbyte round)
+- Where AI is used: only `lib/ai-extract.ts` reads the message into
+  `{items[{raw_text, product_guess, qty, unit, confidence}], delivery_area,
+  requested_date, language, notes}`. The prompt lists product names and aliases,
+  never prices. zod strips anything else (e.g. a "price" key).
+- Where rules decide: `toDraftLines` in `rules.ts` matches `product_guess`
+  (then the customer's words) against the catalogue; prices, discounts, stock and
+  totals are unchanged rule code. AI confidence < 0.7 → `low_confidence`; no or
+  non-whole quantity → `missing_quantity`; not in catalogue → `unknown_item`.
+- Fallback to the rules parser: AI switched off in Settings, no key, API error,
+  invalid JSON, or 8 s timeout. The reason is stored on the `quote_drafted` log
+  entry and shown as the draft's "Parsed by" badge. The model call happens before
+  the DB transaction.
+- Provider: `lib/llm.ts`, plain fetch. Env: `AI_PROVIDER` (gemini default |
+  anthropic | openai), `AI_API_KEY` (secret), optional `AI_MODEL`
+  (default gemini-2.5-flash). Locally put them in a git-ignored `.env` at the
+  repo root; on Replit in Secrets. **No key has been tested live yet**: the AI
+  path is covered by unit tests with a stubbed model only.
+- Settings (Owner, `?view=settings`): AI on/off, manual minutes per quote,
+  simulated credit top-up. Stored as `setting_changed` log rows (no schema
+  change); Reset demo data returns them to defaults.
+- Eval: `data/eval-set.json` (15 seed + 5 held-out synthetic messages with
+  expected SKU + qty). `pnpm --filter @workspace/api-server run eval` (no DB
+  needed) or `?view=eval` (Owner, saved as `eval_run` log rows). Rules today:
+  34/37 items (91.9%) overall, 100% on seed (it was tuned on them), 62.5% on
+  held-out. Run the AI eval once a key is set and use those numbers in the PRD.
+
 ## Broken or unfinished
-- M5: AI extraction (strict JSON, zod, 8 s timeout, rules fallback). `parsedBy`
-  is always `rules` today.
-- M6: dashboard, settings, POST `/api/messages` webhook.
+- Live AI run and AI eval numbers need the Gemini key (see above).
+- Dashboard and Orbyte shell are the next two steps; POST `/api/messages`
+  webhook is not built.
 - Role switching is a demo control, not authentication (by design).
 
 ## Next steps in order

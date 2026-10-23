@@ -24,7 +24,10 @@ import type {
   ActorRequest,
   CatalogItem,
   DemoContext,
+  EvalRequest,
+  EvalResult,
   GetHealth200,
+  GetLatestEval200,
   HealthStatus,
   InboxMessage,
   ListActivityParams,
@@ -33,7 +36,9 @@ import type {
   QuoteDetail,
   QuoteItemUpdate,
   QuoteUpdate,
-  ResetDemo200
+  ResetDemo200,
+  Settings,
+  SettingsUpdate
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -907,6 +912,312 @@ export function useListActivity<TData = Awaited<ReturnType<typeof listActivity>>
 
 
 
+
+export const getGetSettingsUrl = () => {
+
+
+
+
+  return `/api/settings`
+}
+
+export const getSettings = async ( options?: Parameters<typeof customFetch>[1]): Promise<Settings> => {
+
+  return customFetch<Settings>(getGetSettingsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSettingsQueryKey = () => {
+    return [
+    `/api/settings`
+    ] as const;
+    }
+
+
+export const getGetSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getSettings>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSettingsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSettings>>> = ({ signal }) => getSettings({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSettings>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getSettings>>>
+export type GetSettingsQueryError = ErrorType<unknown>
+
+
+
+export function useGetSettings<TData = Awaited<ReturnType<typeof getSettings>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateSettingsUrl = () => {
+
+
+
+
+  return `/api/settings`
+}
+
+export const updateSettings = async (settingsUpdate: SettingsUpdate, options?: Parameters<typeof customFetch>[1]): Promise<Settings> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<Settings>(getUpdateSettingsUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(settingsUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateSettingsMutationKey = () => ['updateSettings'] as const;
+
+export const getUpdateSettingsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSettings>>, TError,UpdateSettingsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateSettings>>, TError,UpdateSettingsMutationVariables, TContext> => {
+
+const mutationKey = getUpdateSettingsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSettings>>, UpdateSettingsMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateSettings(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof updateSettings>>>
+    export type UpdateSettingsMutationBody = BodyType<SettingsUpdate>
+    export type UpdateSettingsMutationError = ErrorType<unknown>
+    export type UpdateSettingsMutationVariables = {data: BodyType<SettingsUpdate>}
+
+    export const useUpdateSettings = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSettings>>, TError,UpdateSettingsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateSettings>>,
+        TError,
+        UpdateSettingsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateSettingsMutationOptions(options));
+    }
+
+export const getGetLatestEvalUrl = () => {
+
+
+
+
+  return `/api/eval`
+}
+
+export const getLatestEval = async ( options?: Parameters<typeof customFetch>[1]): Promise<GetLatestEval200> => {
+
+  return customFetch<GetLatestEval200>(getGetLatestEvalUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetLatestEvalQueryKey = () => {
+    return [
+    `/api/eval`
+    ] as const;
+    }
+
+
+export const getGetLatestEvalQueryOptions = <TData = Awaited<ReturnType<typeof getLatestEval>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLatestEval>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLatestEvalQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLatestEval>>> = ({ signal }) => getLatestEval({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLatestEval>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetLatestEvalQueryResult = NonNullable<Awaited<ReturnType<typeof getLatestEval>>>
+export type GetLatestEvalQueryError = ErrorType<unknown>
+
+
+
+export function useGetLatestEval<TData = Awaited<ReturnType<typeof getLatestEval>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLatestEval>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetLatestEvalQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getRunEvalUrl = () => {
+
+
+
+
+  return `/api/eval`
+}
+
+export const runEval = async (evalRequest: EvalRequest, options?: Parameters<typeof customFetch>[1]): Promise<EvalResult> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<EvalResult>(getRunEvalUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(evalRequest)
+  }
+);}
+
+
+
+
+
+export const getRunEvalMutationKey = () => ['runEval'] as const;
+
+export const getRunEvalMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof runEval>>, TError,RunEvalMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof runEval>>, TError,RunEvalMutationVariables, TContext> => {
+
+const mutationKey = getRunEvalMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof runEval>>, RunEvalMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  runEval(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RunEvalMutationResult = NonNullable<Awaited<ReturnType<typeof runEval>>>
+    export type RunEvalMutationBody = BodyType<EvalRequest>
+    export type RunEvalMutationError = ErrorType<unknown>
+    export type RunEvalMutationVariables = {data: BodyType<EvalRequest>}
+
+    export const useRunEval = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof runEval>>, TError,RunEvalMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof runEval>>,
+        TError,
+        RunEvalMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRunEvalMutationOptions(options));
+    }
 
 export const getResetDemoUrl = () => {
 

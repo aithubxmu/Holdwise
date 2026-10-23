@@ -41,16 +41,20 @@ export function QuoteLine({
         </span>
       </div>
 
+      <div className="mt-1 font-mono text-[10px] text-ink-soft" data-testid={`text-confidence-${line.id}`}>
+        match confidence {Math.round(line.confidence * 100)}%
+      </div>
       {flagged && (
-        <ul className="mt-2 flex flex-wrap gap-1.5">
+        <ul className="mt-2 space-y-1">
           {line.flags.map((f) => (
-            <li key={f} className="flex items-center gap-1 rounded-md bg-brick px-1.5 py-0.5 text-[11px] font-semibold text-white" title={FLAG_META[f].hint}>
-              <TriangleAlert className="h-3 w-3" />
-              {FLAG_META[f].label}
-              {f === "insufficient_stock" && line.available !== null && <span className="font-normal">· {line.available} left</span>}
+            <li key={f} className="flex flex-wrap items-center gap-1.5 text-[12px]">
+              <span className="flex items-center gap-1 rounded-md bg-brick px-1.5 py-0.5 text-[11px] font-semibold text-white">
+                <TriangleAlert className="h-3 w-3" />
+                {FLAG_META[f].label}
+              </span>
+              <span className="text-ink-soft">{why(f, line)} {FLAG_META[f].hint}.</span>
             </li>
           ))}
-          <li className="text-[11px] text-ink-soft">{FLAG_META[line.flags[0]!].hint}</li>
         </ul>
       )}
 
@@ -136,6 +140,18 @@ export function QuoteLine({
       )}
     </li>
   );
+}
+
+/** Plain-words reason for a flag, built from the line itself. */
+function why(flag: Line["flags"][number], line: Line) {
+  switch (flag) {
+    case "unknown_item": return `“${line.rawText}” doesn't match anything the shop sells.`;
+    case "ambiguous_variant": return `${line.options.length || "Several"} products fit “${line.rawText}”${line.options.length ? `: ${line.options.map((o) => o.name).join(" or ")}` : ""}.`;
+    case "low_confidence": return `Matched ${line.productName ?? "a product"}, but only ${Math.round(line.confidence * 100)}% sure.`;
+    case "missing_quantity": return "The customer didn't say how many.";
+    case "invalid_quantity": return "The quantity isn't a whole number above zero.";
+    case "insufficient_stock": return `Only ${line.available ?? 0} available, ${line.qty} asked for.`;
+  }
 }
 
 /** Text input that commits on blur or Enter, and resets when the server value changes. */

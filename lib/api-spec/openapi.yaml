@@ -161,6 +161,55 @@ paths:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/ActivityEntry" }
+  /settings:
+    get:
+      operationId: getSettings
+      responses:
+        "200":
+          description: Owner settings and whether an AI key is configured
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Settings" }
+    patch:
+      operationId: updateSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SettingsUpdate" }
+      responses:
+        "200":
+          description: Updated settings (owner only)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Settings" }
+  /eval:
+    get:
+      operationId: getLatestEval
+      responses:
+        "200":
+          description: Latest saved evaluation per parser
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ai, rules]
+                properties:
+                  ai: { oneOf: [{ $ref: "#/components/schemas/EvalResult" }, { type: "null" }] }
+                  rules: { oneOf: [{ $ref: "#/components/schemas/EvalResult" }, { type: "null" }] }
+    post:
+      operationId: runEval
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EvalRequest" }
+      responses:
+        "200":
+          description: Fresh evaluation on the synthetic test set (owner only)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EvalResult" }
   /demo/reset:
     post:
       operationId: resetDemo
@@ -227,6 +276,84 @@ components:
         customerCount: { type: integer }
         zoneCount: { type: integer }
         milestone: { type: string }
+    Settings:
+      type: object
+      required: [aiExtraction, manualMinutesPerQuote, startingCredits, ai]
+      properties:
+        aiExtraction: { type: boolean }
+        manualMinutesPerQuote: { type: number }
+        startingCredits: { type: integer }
+        ai:
+          type: object
+          required: [configured, provider, model]
+          properties:
+            configured: { type: boolean }
+            provider: { type: [string, "null"] }
+            model: { type: [string, "null"] }
+    SettingsUpdate:
+      type: object
+      required: [actorUserId]
+      properties:
+        actorUserId: { type: integer }
+        aiExtraction: { type: boolean }
+        manualMinutesPerQuote: { type: number, minimum: 1, maximum: 240 }
+        startingCredits: { type: integer, minimum: 0, maximum: 100000 }
+    EvalRequest:
+      type: object
+      required: [actorUserId, mode]
+      properties:
+        actorUserId: { type: integer }
+        mode: { type: string, enum: [ai, rules] }
+    EvalSummary:
+      type: object
+      required: [itemsExpected, itemsCorrect, extractionAccuracyPct, qtyAccuracyPct, extraLines, flagsRaised, zoneAccuracyPct]
+      properties:
+        itemsExpected: { type: integer }
+        itemsCorrect: { type: integer }
+        extractionAccuracyPct: { type: [number, "null"] }
+        qtyAccuracyPct: { type: [number, "null"] }
+        extraLines: { type: integer }
+        flagsRaised: { type: integer }
+        zoneAccuracyPct: { type: [number, "null"] }
+    EvalRow:
+      type: object
+      required: [id, set, text, expected, correct, qtyCorrect, extra, flags, parsedBy, fallbackReason, latencyMs, lines]
+      properties:
+        id: { type: string }
+        set: { type: string }
+        text: { type: string }
+        expected: { type: integer }
+        correct: { type: integer }
+        qtyCorrect: { type: integer }
+        extra: { type: integer }
+        flags: { type: integer }
+        parsedBy: { type: string }
+        fallbackReason: { type: [string, "null"] }
+        latencyMs: { type: integer }
+        lines:
+          type: array
+          items:
+            type: object
+            required: [rawText, product, qty, flags]
+            properties:
+              rawText: { type: string }
+              product: { type: [string, "null"] }
+              qty: { type: integer }
+              flags: { type: array, items: { type: string } }
+    EvalResult:
+      type: object
+      required: [mode, model, ranAt, messages, avgLatencyMs, fallbacks, all, seed, heldOut, rows]
+      properties:
+        mode: { type: string, enum: [ai, rules] }
+        model: { type: [string, "null"] }
+        ranAt: { type: string }
+        messages: { type: integer }
+        avgLatencyMs: { type: integer }
+        fallbacks: { type: integer }
+        all: { $ref: "#/components/schemas/EvalSummary" }
+        seed: { $ref: "#/components/schemas/EvalSummary" }
+        heldOut: { $ref: "#/components/schemas/EvalSummary" }
+        rows: { type: array, items: { $ref: "#/components/schemas/EvalRow" } }
     ApiError:
       type: object
       required: [error]
@@ -305,8 +432,17 @@ components:
       type: object
       required: [id, messageId, messageBody, receivedAt, customerName, customerType, customerPhone, deliveryZone, status, parsedBy,
         lines, subtotalRm, discountPct, discountRm, deliveryRm, totalRm, totalsComplete, approvalReasons, openFlags,
-        canSend, needsOwner, createdAt, sentAt, validUntil, lastComment]
+        canSend, needsOwner, createdAt, sentAt, validUntil, lastComment, parser]
       properties:
+        parser:
+          type: object
+          required: [model, latencyMs, fallbackReason, language, notes]
+          properties:
+            model: { type: [string, "null"] }
+            latencyMs: { type: [integer, "null"] }
+            fallbackReason: { type: [string, "null"] }
+            language: { type: [string, "null"] }
+            notes: { type: [string, "null"] }
         id: { type: integer }
         messageId: { type: integer }
         messageBody: { type: string }

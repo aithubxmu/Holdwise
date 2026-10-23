@@ -58,10 +58,20 @@ they preserve the existing data. To start over, act as Owner and press
 **Reset demo data** (POST `/api/demo/reset`), which wipes and reseeds in one transaction.
 
 ## AI versus rules
-The app makes no AI calls yet and needs no AI key. Rule-based extraction and pure
-business rules are implemented in `artifacts/api-server/src/lib/`. M5 will add schema-validated AI extraction with an
-eight-second timeout and automatic rules fallback. AI will never set prices,
-invent catalog products, decide discounts, or approve quotations.
+AI does one job: reading the messy Malay / English / Manglish message into items,
+quantities and a delivery area (`artifacts/api-server/src/lib/ai-extract.ts`).
+The model sees product names and aliases, never prices, and must return strict
+JSON validated with zod. Catalogue matching, prices, discounts, stock, totals and
+approval routing are deterministic rules (`rules.ts`). If AI is off, has no key,
+errors, returns invalid JSON or takes over 8 s, the rules parser is used and the
+draft says why.
+
+Configure with environment variables (local `.env` at the repo root, which git
+ignores, or Replit Secrets): `AI_PROVIDER` = `gemini` (default) | `anthropic` |
+`openai`, `AI_API_KEY`, optional `AI_MODEL`.
+
+Measure it: `pnpm --filter @workspace/api-server run eval`, or the **AI eval**
+tab as Owner. Results are on our small synthetic test set (`data/eval-set.json`).
 
 ## Technology
 Next.js App Router, TypeScript, Tailwind CSS, Express API, PostgreSQL, Drizzle ORM,

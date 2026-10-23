@@ -9,7 +9,7 @@ import {
   useResetDemo,
   type DemoUserRole,
 } from "@workspace/api-client-react";
-import { Eye, History, Inbox as InboxIcon, RefreshCw, RotateCcw, Send, ShieldCheck, Wrench } from "lucide-react";
+import { Eye, FlaskConical, History, Inbox as InboxIcon, RefreshCw, RotateCcw, Send, Settings2, ShieldCheck, Wrench } from "lucide-react";
 import { refreshAll, type Actor } from "@/lib/actor";
 import { apiErrorMessage } from "@/lib/format";
 import { HealthDot } from "./shared";
@@ -17,6 +17,8 @@ import { Inbox } from "./inbox";
 import { Approvals } from "./approvals";
 import { Outbox } from "./outbox";
 import { ActivityLog } from "./activity";
+import { SettingsView } from "./settings";
+import { AiEval } from "./ai-eval";
 
 const ROLE_KEY = "quotelah.actingRole";
 const ROLES: { role: DemoUserRole; label: string; note: string }[] = [
@@ -30,6 +32,8 @@ const VIEWS = [
   { id: "approvals", label: "Approvals", icon: ShieldCheck },
   { id: "outbox", label: "Outbox", icon: Send },
   { id: "activity", label: "Activity log", icon: History },
+  { id: "eval", label: "AI eval", icon: FlaskConical, ownerOnly: true },
+  { id: "settings", label: "Settings", icon: Settings2, ownerOnly: true },
 ] as const;
 export type View = (typeof VIEWS)[number]["id"];
 
@@ -81,7 +85,7 @@ export function App() {
   const user = ctx.data?.users.find((u) => u.role === role);
   const actor: Actor = { role, userId: user?.id ?? null, name: user?.name ?? role };
   const count = (s: string) => (messages.data ?? []).filter((m) => m.status === s).length;
-  const badges: Record<View, number> = { inbox: count("new") + count("needs_review"), approvals: count("awaiting_approval"), outbox: count("sent"), activity: 0 };
+  const badges: Record<View, number> = { inbox: count("new") + count("needs_review"), approvals: count("awaiting_approval"), outbox: count("sent"), activity: 0, eval: 0, settings: 0 };
   const refreshing = messages.isFetching || ctx.isFetching;
 
   return (
@@ -123,7 +127,7 @@ export function App() {
           </div>
         </div>
         <nav className="mx-auto flex max-w-[1400px] gap-1 overflow-x-auto px-4 [scrollbar-width:none] md:px-6" aria-label="Sections">
-          {VIEWS.map(({ id, label, icon: Icon }) => (
+          {VIEWS.filter((v) => !("ownerOnly" in v) || role === "owner").map(({ id, label, icon: Icon }) => (
             <button key={id} onClick={() => go(id)} data-testid={`tab-${id}`} aria-current={view === id ? "page" : undefined}
               className={`flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-semibold transition ${view === id ? "border-teal text-ink" : "border-transparent text-ink-soft hover:text-ink"}`}>
               <Icon className="h-4 w-4" />
@@ -156,6 +160,8 @@ export function App() {
       {view === "approvals" && <Approvals actor={actor} onOpen={(m) => go("inbox", m)} />}
       {view === "outbox" && <Outbox onOpen={(m) => go("inbox", m)} />}
       {view === "activity" && <ActivityLog />}
+      {view === "eval" && <AiEval actor={actor} />}
+      {view === "settings" && <SettingsView actor={actor} />}
     </div>
   );
 }
