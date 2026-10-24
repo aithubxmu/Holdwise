@@ -70,24 +70,26 @@ press Reset demo data as Owner (see below) and click through once.
   invalid JSON, or 8 s timeout. The reason is stored on the `quote_drafted` log
   entry and shown as the draft's "Parsed by" badge. The model call happens before
   the DB transaction.
-- Provider in use (24 Oct, team decision): **Google Gemini** free tier
-  (`AI_PROVIDER=gemini`, `AI_API_KEY`). Free-tier limits: ~5 requests/min for
-  Flash, 15 for Flash Lite, plus a daily cap; over the limit Google returns 429
-  and drafts fall back to rules. Run the eval (~20 calls) once, not before a demo.
-- Optional, not used: **GLM-5.3 on the RunPod Public
-  Endpoint**, OpenAI-compatible, `reasoning_effort: "low"`, `max_tokens` 1000.
+- Main provider (24 Oct, team decision, verified live): **GLM-5.3 on the RunPod
+  Public Endpoint**, OpenAI-compatible, `reasoning_effort: "low"`, `max_tokens` 1000.
   Picked automatically when `RUNPOD_API_KEY` is set (or `AI_PROVIDER=runpod`).
   The endpoint URL is in `lib/llm.ts` (override with `AI_BASE_URL`). Without a
   RunPod key, a Gemini `AI_API_KEY` still works, and with no key at all the rules
-  parser runs. **Not yet run live with a RunPod key**: the RunPod request shape is
-  unit-tested with a stubbed fetch, and the endpoint answers 401 without a token.
+  parser runs. Live check 24 Oct: direct call 200 in 2.3 s; browser journey with
+  "Parsed by AI (glm-5.3)" through owner approval, send, credit and log.
+  Same journey on the same code with no keys at all (24 Oct): badge "Parsed by
+  rules (fallback): No AI key configured", approval, send, credit and log all work.
+- Eval 24 Oct (synthetic set, 20 messages): GLM-5.3 37/37 items (100%), quantities
+  100%, held-out 8/8, 0 fallbacks, avg 4.0 s; rules 34/37 (91.9%), held-out 5/8,
+  held-out quantities 40%. Use these numbers in the PRD and pitch.
+- Gemini (`AI_API_KEY`) stays as the backup when there is no RunPod key. Its free
+  tier allows ~5 requests/min for Flash; over the limit drafts fall back to rules.
   23 Oct, browser check of the whole journey (draft → owner approval → send →
   credit → log → dashboard) passed twice: with AI (Gemini key) and with no key
   (rules fallback badge). 31 unit tests.
-- Provider: `lib/llm.ts`, plain fetch. Env: `AI_PROVIDER` (gemini default |
-  anthropic | openai), `AI_API_KEY` (secret), optional `AI_MODEL`
-  (default gemini-3.5-flash). Locally put them in a git-ignored `.env` at the
-  repo root; on Replit in Secrets. Tested live with a free Gemini key on 23 Oct.
+- Provider: `lib/llm.ts`, plain fetch. Env: `RUNPOD_API_KEY` (main, GLM-5.3), or
+  `AI_PROVIDER` = gemini | anthropic | openai with `AI_API_KEY`; optional `AI_MODEL`.
+  Locally put them in a git-ignored `.env` at the repo root; on Replit in Secrets.
 - Settings (Owner, `?view=settings`): AI on/off, manual minutes per quote,
   simulated credit top-up. Stored as `setting_changed` log rows (no schema
   change); Reset demo data returns them to defaults.
@@ -153,9 +155,8 @@ On macOS the lockfile has only linux-x64 native binaries (Replit); a local
   served with an `index.html` fallback, so extra routes would add risk.
 - Approvals return with a mandatory comment so staff know what to change.
 
-## RunPod proof of use (only if the team switches to RunPod)
-RunPod is not used today, so no proof is needed. If you set `RUNPOD_API_KEY`,
-the repo must contain
+## RunPod proof of use (needed for submission)
+The team uses RunPod for model inference, so the repo must contain
 `submission/SDC2026_Holdwise_Runpod_POU.pdf`. Make it after a few drafts and one
 AI eval have run with `RUNPOD_API_KEY` set:
 1. Log in to runpod.io with the team leader's account (the one that redeemed the
