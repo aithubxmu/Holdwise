@@ -169,3 +169,8 @@ AI eval have run with `RUNPOD_API_KEY` set:
 4. Put the screenshots into one PDF named `SDC2026_Holdwise_Runpod_POU.pdf` in
    `submission/` and reference it from the Tech & Tools Declaration. Never show
    the API key itself on a screenshot.
+
+Done on 24 Oct: the PDF is in `submission/` (4 pages: account ait2609221 with
+balance $24.97, Billing explorer with $0.012 Runpod Endpoint spend that day, the
+GLM-5.3 endpoint b1dd8hy2hqo1nb, and a live draft "Parsed by AI (glm-5.3)").
+Still to do: reference it from the Tech & Tools Declaration.
