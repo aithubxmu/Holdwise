@@ -72,25 +72,20 @@ errors, returns invalid JSON or takes over 8 s, the rules parser is used and the
 draft says why.
 
 Configure with environment variables (local `.env` at the repo root, which git
-ignores, or Replit Secrets). Main model: **GLM-5.3 on RunPod**, set `RUNPOD_API_KEY`.
-Alternatives: `AI_PROVIDER` = `gemini` | `anthropic` | `openai` with `AI_API_KEY`;
-optional `AI_MODEL`. With no key at all, everything runs on the rules parser.
+ignores, or Replit Secrets). We use **Google Gemini** (`gemini-3.5-flash`, free
+tier) with `AI_PROVIDER=gemini` and `AI_API_KEY`. The adapter also supports
+`anthropic`, `openai` and GLM-5.3 on RunPod (`RUNPOD_API_KEY`), but those are not
+used in this submission. With no key at all, everything runs on the rules parser.
 
 Measure it: `pnpm --filter @workspace/api-server run eval`, or the **AI eval**
 tab as Owner. Results are on our small synthetic test set (`data/eval-set.json`).
 
 ## How We Use RunPod
-- **Workload:** model inference. The AI step that reads each WhatsApp message
-  into items runs on **GLM-5.3** through the sponsor's RunPod Public Endpoint
-  (`https://api.runpod.ai/v2/b1dd8hy2hqo1nb/openai/v1`, OpenAI-compatible chat
-  completions), called from `artifacts/api-server/src/lib/llm.ts`.
-- **Cost control:** `reasoning_effort: "low"` and `max_tokens: 1000` per call;
-  one call per drafted quote (the AI eval makes ~20). The team credit is US$25.
-- **Secrets:** `RUNPOD_API_KEY` lives only in Replit Secrets / a git-ignored
-  `.env`, never in code or commits.
-- **Fallback:** no key, an error, invalid JSON or more than 8 s → the rules parser,
-  and the draft says so ("Parsed by rules (fallback): reason").
-- Proof of use: `submission/SDC2026_Holdwise_Runpod_POU.pdf`.
+Not used in this submission. No part of Holdwise trains, fine-tunes or runs a
+model on a GPU; AI extraction calls Google Gemini's hosted API. The adapter can
+switch to GLM-5.3 on the sponsor's RunPod Public Endpoint by setting
+`RUNPOD_API_KEY` (see `artifacts/api-server/src/lib/llm.ts`); if the team does
+that, add `submission/SDC2026_Holdwise_Runpod_POU.pdf` (see HANDOFF.md).
 
 ## How We Use Replit
 - Development started in Replit (Replit Agent), and the app is hosted with Replit
