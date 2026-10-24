@@ -70,7 +70,11 @@ press Reset demo data as Owner (see below) and click through once.
   invalid JSON, or 8 s timeout. The reason is stored on the `quote_drafted` log
   entry and shown as the draft's "Parsed by" badge. The model call happens before
   the DB transaction.
-- Main provider (since 23 Oct, team decision): **GLM-5.3 on the RunPod Public
+- Provider in use (24 Oct, team decision): **Google Gemini** free tier
+  (`AI_PROVIDER=gemini`, `AI_API_KEY`). Free-tier limits: ~5 requests/min for
+  Flash, 15 for Flash Lite, plus a daily cap; over the limit Google returns 429
+  and drafts fall back to rules. Run the eval (~20 calls) once, not before a demo.
+- Optional, not used: **GLM-5.3 on the RunPod Public
   Endpoint**, OpenAI-compatible, `reasoning_effort: "low"`, `max_tokens` 1000.
   Picked automatically when `RUNPOD_API_KEY` is set (or `AI_PROVIDER=runpod`).
   The endpoint URL is in `lib/llm.ts` (override with `AI_BASE_URL`). Without a
@@ -149,8 +153,9 @@ On macOS the lockfile has only linux-x64 native binaries (Replit); a local
   served with an `index.html` fallback, so extra routes would add risk.
 - Approvals return with a mandatory comment so staff know what to change.
 
-## RunPod proof of use (needed for submission)
-The team uses RunPod for model inference, so the repo must contain
+## RunPod proof of use (only if the team switches to RunPod)
+RunPod is not used today, so no proof is needed. If you set `RUNPOD_API_KEY`,
+the repo must contain
 `submission/SDC2026_Holdwise_Runpod_POU.pdf`. Make it after a few drafts and one
 AI eval have run with `RUNPOD_API_KEY` set:
 1. Log in to runpod.io with the team leader's account (the one that redeemed the
