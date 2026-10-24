@@ -101,6 +101,7 @@ tab as Owner. Results are on our small synthetic test set (`data/eval-set.json`)
 - Development started in Replit (Replit Agent), and the app is hosted with Replit
   Deployments at the live URL below: a Next.js static site plus the Express API on
   Replit's PostgreSQL. Secrets are stored in Replit Secrets.
+- Proof of use: `submission/SDC2026_Holdwise_Replit_POU.pdf`.
 
 ## Technology
 Next.js App Router, TypeScript, Tailwind CSS, Express API, PostgreSQL, Drizzle ORM,
