@@ -70,6 +70,16 @@ press Reset demo data as Owner (see below) and click through once.
   invalid JSON, or 8 s timeout. The reason is stored on the `quote_drafted` log
   entry and shown as the draft's "Parsed by" badge. The model call happens before
   the DB transaction.
+- Main provider (since 23 Oct, team decision): **GLM-5.3 on the RunPod Public
+  Endpoint**, OpenAI-compatible, `reasoning_effort: "low"`, `max_tokens` 1000.
+  Picked automatically when `RUNPOD_API_KEY` is set (or `AI_PROVIDER=runpod`).
+  The endpoint URL is in `lib/llm.ts` (override with `AI_BASE_URL`). Without a
+  RunPod key, a Gemini `AI_API_KEY` still works, and with no key at all the rules
+  parser runs. **Not yet run live with a RunPod key**: the RunPod request shape is
+  unit-tested with a stubbed fetch, and the endpoint answers 401 without a token.
+  23 Oct, browser check of the whole journey (draft → owner approval → send →
+  credit → log → dashboard) passed twice: with AI (Gemini key) and with no key
+  (rules fallback badge). 31 unit tests.
 - Provider: `lib/llm.ts`, plain fetch. Env: `AI_PROVIDER` (gemini default |
   anthropic | openai), `AI_API_KEY` (secret), optional `AI_MODEL`
   (default gemini-3.5-flash). Locally put them in a git-ignored `.env` at the
@@ -138,3 +148,18 @@ On macOS the lockfile has only linux-x64 native binaries (Replit); a local
 - Single page with `?view=` instead of new Next routes: the static export is
   served with an `index.html` fallback, so extra routes would add risk.
 - Approvals return with a mandatory comment so staff know what to change.
+
+## RunPod proof of use (needed for submission)
+The team uses RunPod for model inference, so the repo must contain
+`submission/SDC2026_Holdwise_Runpod_POU.pdf`. Make it after a few drafts and one
+AI eval have run with `RUNPOD_API_KEY` set:
+1. Log in to runpod.io with the team leader's account (the one that redeemed the
+   voucher on sdchack.my/portal).
+2. Screenshot showing **your account** (name/email top right), the **endpoint
+   URL** `https://api.runpod.ai/v2/b1dd8hy2hqo1nb/openai/v1` (or its endpoint
+   page), and **usage/spend** (Billing or the endpoint's usage graph with a
+   non-zero amount, ideally today's date).
+3. Optional second screenshot: Holdwise draft showing "Parsed by AI (glm-5.3)".
+4. Put the screenshots into one PDF named `SDC2026_Holdwise_Runpod_POU.pdf` in
+   `submission/` and reference it from the Tech & Tools Declaration. Never show
+   the API key itself on a screenshot.
