@@ -21,7 +21,7 @@ human-reviewed quotations. **Current release: M4. The full five-step journey wor
 | --- | --- |
 | Live prototype (Replit Deployments) | https://quote-lah-hardware-quotation-mvp.replit.app |
 | GitHub repository | https://github.com/aithubxmu/Holdwise |
-| Pitching video (YouTube) | To be added before 25 Oct 2026, 7:59 AM MYT |
+| Pitching video (YouTube, 5:56, with live demo) | https://youtu.be/vnjLTVoPZFI |
 | Pitch deck slides | [submission/SDC2026_Holdwise_Slides.pdf](submission/SDC2026_Holdwise_Slides.pdf) |
 | Product Requirement Document (Preliminary proposal) | [submission/SDC2026_Holdwise_PRD.pdf](submission/SDC2026_Holdwise_PRD.pdf) · same file: [submission/SDC2026_Holdwise_Preliminary.pdf](submission/SDC2026_Holdwise_Preliminary.pdf) |
 | Technical & Tools Declaration | [submission/SDC2026_Holdwise_TechDeclaration.pdf](submission/SDC2026_Holdwise_TechDeclaration.pdf) |
